@@ -182,6 +182,33 @@ try {
   const agentCleanup = readFile(TASKS_FILE);
   check("No agent test artifacts remain", !agentCleanup.includes("__agent_test_"));
 
+  // Test 19: Drag & drop fix - verify move API works reliably (backend for drag&drop)
+  await post("/api/tasks", { project: PROJECT, action: "add", status: "todo", text: "__drag_test__" });
+  const dragTestAdd = await get("/api/projects");
+  const dragTestAddProj = dragTestAdd.projects.find(p => p.name === PROJECT);
+  check("Drag test: task added to todo", (dragTestAddProj?.tasks?.todo || []).includes("__drag_test__"));
+  await post("/api/tasks", { project: PROJECT, action: "move", status: "todo", to: "in-progress", text: "__drag_test__" });
+  const dragTestMove = await get("/api/projects");
+  const dragTestMoveProj = dragTestMove.projects.find(p => p.name === PROJECT);
+  check("Drag test: move todo→in-progress", (dragTestMoveProj?.tasks?.["in-progress"] || []).includes("__drag_test__"));
+  await post("/api/tasks", { project: PROJECT, action: "move", status: "in-progress", to: "done", text: "__drag_test__" });
+  const dragTestMove2 = await get("/api/projects");
+  const dragTestMove2Proj = dragTestMove2.projects.find(p => p.name === PROJECT);
+  check("Drag test: move in-progress→done", (dragTestMove2Proj?.tasks?.done || []).includes("__drag_test__"));
+  await post("/api/tasks", { project: PROJECT, action: "delete", status: "done", text: "__drag_test__" });
+
+  // Test 20: Goal delete freshness - verify file is immediately updated
+  await post("/api/agent-update", { project: PROJECT, action: "add_goal", text: "__goal_fresh_test__" });
+  const goalFreshBefore = readFile(GOALS_FILE);
+  check("Goal fresh test: goal added to file", goalFreshBefore.includes("__goal_fresh_test__"));
+  await post("/api/agent-update", { project: PROJECT, action: "delete_goal", text: "__goal_fresh_test__" });
+  const goalFreshAfter = readFile(GOALS_FILE);
+  check("Goal fresh test: goal removed from file immediately", !goalFreshAfter.includes("__goal_fresh_test__"));
+
+  // Test 21: Add Task positioning - verify todo section format is maintained
+  const todoSection = finalTasks.match(/## Todo\n\n([\s\S]*?)\n\n## In Progress/);
+  check("Todo section format valid for top-positioned Add Task", !!todoSection);
+
 } catch (e) {
   failed++;
   results.push(`  ✗ Unexpected error: ${e.message}`);

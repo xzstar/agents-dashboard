@@ -2,8 +2,6 @@
 
 ## Todo
 
-- [ ] 支持 Agent 通过 API 自动更新 ×
-
 ## In Progress
 
 
@@ -30,4 +28,7 @@
 - [x] Goal 和 task 双击编辑文本
 - [x] 建立测试集（test.mjs 24 项测试）
 - [x] 支持 Agent 通过 API 自动更新（POST /api/agent-update）
-
+- [x] 支持 Agent 通过 API 自动更新 ×
+- [x] "Add Task" always on top
+- [x] drag to InProgress or Done fail, fix it
+- [x] fix remove goals item action not fresh

@@ -1,6 +1,22 @@
 # Changelog
 
 ## 2026-09-23
+- delete goal: __goal_fresh_test__
+- add goal: __goal_fresh_test__
+- delete task: __agent_test_task__
+- complete task: __agent_test_task__
+- add task: __agent_test_task__
+- delete goal: __goal_fresh_test__
+- add goal: __goal_fresh_test__
+- delete task: __agent_test_task__
+- complete task: __agent_test_task__
+- add task: __agent_test_task__
+- add task: __drag_test__
+- delete goal: __goal_fresh_test__
+- add goal: __goal_fresh_test__
+- delete task: __agent_test_task__
+- complete task: __agent_test_task__
+- add task: __agent_test_task__
 - delete task: __agent_test_task__
 - complete task: __agent_test_task__
 - add task: __agent_test_task__
@@ -33,3 +49,5 @@
 - 实现 POST /api/agent-update 统一端点，Agent 可直接调用 API 更新任务/目标/状态
 - 更新全部 9 个项目 AGENTS.md，添加 API 快捷更新说明
 - 测试集扩展到 29 项，覆盖 agent-update 端点
+- 修复三项 bug：①Add Task 按钮移到列顶部 ②拖拽失败（isProcessing ReferenceError）③Goal 删除后不刷新（焦点检查过宽）
+- 测试集扩展到 36 项，新增拖拽链路测试和目标文件即时性测试

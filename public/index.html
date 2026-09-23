@@ -301,7 +301,7 @@
       const infoSection = document.getElementById("info-section");
       if (selectedProject) {
         const proj = filtered[0];
-        const infoEditing = infoSection.contains(document.activeElement) || infoSection.querySelector(".desc-edit");
+        const infoEditing = infoSection.querySelector(".desc-edit") || infoSection.querySelector(".goal-add-container[style*='block']");
         if (proj && !infoEditing) {
           infoSection.style.display = "block";
           document.getElementById("proj-desc").textContent = proj.meta.description || proj.meta.summary || "";
@@ -335,7 +335,7 @@
           col.innerHTML = pageItems.length
           ? pageItems.map(t => `<div class="task" draggable="true" data-text="${escAttr(t.text)}" data-project="${escAttr(t.project)}" data-status="${status}"><span class="proj-tag ${projectColors[t.project]||'t4'}">${esc(t.project)}</span><br>${esc(t.text)}<button class="move-btn" title="Move to next">→</button><button class="del-btn" title="Delete">×</button></div>`).join("")
           : "";
-          col.insertAdjacentHTML("beforeend", `<button class="add-btn" data-col="${status}">+ Add Task</button>`);
+          col.insertAdjacentHTML("afterbegin", `<button class="add-btn" data-col="${status}">+ Add Task</button>`);
           const footer = document.getElementById("footer-" + status);
           if (totalPages > 1) {
             footer.style.display = "flex";
@@ -384,7 +384,6 @@
         col.addEventListener("drop", async e => {
           e.preventDefault();
           col.classList.remove("drag-over");
-          if (isProcessing) return;
           try {
             const data = JSON.parse(e.dataTransfer.getData("text/plain"));
             if (data.status === status) return;
