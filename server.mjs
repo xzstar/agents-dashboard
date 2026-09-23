@@ -121,6 +121,39 @@ function parseChangelog(content) {
   return entries;
 }
 
+function findProjectDir(name, root, depth = 0) {
+  if (depth > 3) return null;
+  const dashDir = path.join(root, ".dashboard");
+  if (fs.existsSync(dashDir) && fs.statSync(dashDir).isDirectory()) {
+    const statusPath = path.join(dashDir, "status.md");
+    if (fs.existsSync(statusPath)) {
+      const { meta } = parseFrontmatter(fs.readFileSync(statusPath, "utf-8"));
+      if ((meta.project || path.basename(root)) === name) return root;
+    }
+  }
+  try {
+    for (const entry of fs.readdirSync(root, { withFileTypes: true })) {
+      if (!entry.isDirectory() || entry.name.startsWith(".") || entry.name === "node_modules") continue;
+      const found = findProjectDir(name, path.join(root, entry.name), depth + 1);
+      if (found) return found;
+    }
+  } catch {}
+  return null;
+}
+
+function writeTasks(tasksPath, sections) {
+  const labels = { todo: "Todo", "in-progress": "In Progress", done: "Done" };
+  let out = "# Tasks\n\n";
+  for (const key of ["todo", "in-progress", "done"]) {
+    out += `## ${labels[key]}\n\n`;
+    for (const text of sections[key]) {
+      out += `- [${key === "done" ? "x" : " "}] ${text}\n`;
+    }
+    out += "\n";
+  }
+  fs.writeFileSync(tasksPath, out);
+}
+
 // ---------- Project scanner ----------
 function scanProjects(root, depth = 0) {
   if (depth > 3) return [];
@@ -163,6 +196,37 @@ const server = http.createServer((req, res) => {
     const projects = scanProjects(ROOT);
     res.writeHead(200, { "Content-Type": "application/json", "Cache-Control": "no-cache" });
     res.end(JSON.stringify({ root: ROOT, projects, fetchedAt: new Date().toISOString() }));
+    return;
+  }
+
+  if (url.pathname === "/api/tasks" && req.method === "POST") {
+    let body = "";
+    req.on("data", chunk => body += chunk);
+    req.on("end", () => {
+      try {
+        const { project, action, status, text, to } = JSON.parse(body);
+        const projectDir = findProjectDir(project, ROOT);
+        if (!projectDir) { res.writeHead(404, { "Content-Type": "application/json" }); res.end(JSON.stringify({ error: "Project not found" })); return; }
+        const tasksPath = path.join(projectDir, ".dashboard", "tasks.md");
+        const sections = parseTasks(fs.readFileSync(tasksPath, "utf-8"));
+        if (action === "add") {
+          sections[status].push(text);
+        } else if (action === "delete") {
+          sections[status] = sections[status].filter(t => t !== text);
+        } else if (action === "move") {
+          sections[status] = sections[status].filter(t => t !== text);
+          sections[to].push(text);
+        } else {
+          res.writeHead(400, { "Content-Type": "application/json" }); res.end(JSON.stringify({ error: "Unknown action" })); return;
+        }
+        writeTasks(tasksPath, sections);
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: true }));
+      } catch (e) {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: e.message }));
+      }
+    });
     return;
   }
 
