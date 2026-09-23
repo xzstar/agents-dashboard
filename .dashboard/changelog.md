@@ -8,6 +8,16 @@
 - delete task: __agent_test_task__
 - complete task: __agent_test_task__
 - add task: __agent_test_task__
+- complete task: 如果页面处于编辑状态，不更新
+- complete task: 在处理某个todo的时候 把item转到 In Progress
+- complete task: 顶上的 正能量  句子 背景换成花纹，字再大一点
+- delete task: __start_task_test__
+- add goal: __goal_edit_orig__
+- delete goal: __goal_fresh_test__
+- add goal: __goal_fresh_test__
+- delete task: __agent_test_task__
+- complete task: __agent_test_task__
+- add task: __agent_test_task__
 - add goal: __goal_edit_orig__
 - delete goal: __goal_fresh_test__
 - add goal: __goal_fresh_test__

@@ -2,8 +2,6 @@
 
 ## Todo
 
-- [ ] 顶上的 正能量  句子 背景换成花纹，字再大一点
-- [ ] 在处理某个todo的时候 把item转到 In Progress
 
 ## In Progress
 
@@ -36,4 +34,7 @@
 - [x] fix remove goals item action not fresh
 - [x] drag to InProgress or Done fail, fix it
 - [x] "Add Task" 按钮始终在列顶部
+- [x] 顶上的 正能量  句子 背景换成花纹，字再大一点
+- [x] 在处理某个todo的时候 把item转到 In Progress
+- [x] 如果页面处于编辑状态，不更新
 
