@@ -314,7 +314,7 @@
 
       for (const status of ["todo", "in-progress", "done"]) {
         const col = document.getElementById("col-" + status);
-        if (col.querySelector(".add-form input") || col.contains(document.activeElement)) continue;
+        if (col.querySelector(".add-form input")) continue;
         const items = all[status];
         const totalPages = Math.max(1, Math.ceil(items.length / PAGE_SIZE));
         if (pageState[status] >= totalPages) pageState[status] = totalPages - 1;

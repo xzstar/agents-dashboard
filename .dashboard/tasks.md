@@ -2,8 +2,6 @@
 
 ## Todo
 
-- [ ] Goals
-- [ ] Goals能删除目标
 
 ## In Progress
 
