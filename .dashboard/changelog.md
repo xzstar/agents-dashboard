@@ -1,6 +1,13 @@
 # Changelog
 
 ## 2026-09-23
+- delete task: __start_task_test__
+- add goal: __goal_edit_orig__
+- delete goal: __goal_fresh_test__
+- add goal: __goal_fresh_test__
+- delete task: __agent_test_task__
+- complete task: __agent_test_task__
+- add task: __agent_test_task__
 - add goal: __goal_edit_orig__
 - delete goal: __goal_fresh_test__
 - add goal: __goal_fresh_test__

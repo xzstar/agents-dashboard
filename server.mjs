@@ -7,6 +7,7 @@ import { fileURLToPath } from "node:url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = process.argv[2] || __dirname;
 const PORT = process.env.PORT || 3456;
+const sseClients = new Set();
 
 // ---------- YAML frontmatter parser (minimal) ----------
 function parseFrontmatter(content) {
@@ -388,6 +389,28 @@ const server = http.createServer((req, res) => {
         const now = new Date().toISOString();
         const responses = {};
 
+        // Start task (move from todo to in-progress)
+        if (action === "start_task" && text) {
+          const tasksPath = path.join(dashDir, "tasks.md");
+          const sections = parseTasks(fs.readFileSync(tasksPath, "utf-8"));
+          const idx = sections["todo"].findIndex(t => t.trim() === text.trim());
+          if (idx !== -1) {
+            sections["todo"].splice(idx, 1);
+            sections["in-progress"].push(text.trim());
+            writeTasks(tasksPath, sections);
+            responses.task = "started";
+          } else {
+            const ipIdx = sections["in-progress"].findIndex(t => t.trim() === text.trim());
+            if (ipIdx !== -1) {
+              responses.task = "already_in_progress";
+            } else {
+              res.writeHead(404, { "Content-Type": "application/json" });
+              res.end(JSON.stringify({ error: "Task not found in todo" }));
+              return;
+            }
+          }
+        }
+
         // Task operations
         if (action === "add_task" && text && status) {
           const tasksPath = path.join(dashDir, "tasks.md");
@@ -494,8 +517,13 @@ const server = http.createServer((req, res) => {
 
         if (Object.keys(responses).length === 0) {
           res.writeHead(400, { "Content-Type": "application/json" });
-          res.end(JSON.stringify({ error: "No valid action or missing required fields", supported: ["add_task", "complete_task", "move_task", "delete_task", "edit_task", "add_goal", "complete_goal", "delete_goal", "description/summary/stage"] }));
+          res.end(JSON.stringify({ error: "No valid action or missing required fields", supported: ["start_task", "add_task", "complete_task", "move_task", "delete_task", "edit_task", "add_goal", "complete_goal", "delete_goal", "description/summary/stage"] }));
           return;
+        }
+
+        // Notify SSE clients
+        for (const client of sseClients) {
+          client.write(`data: ${JSON.stringify({ type: "agent-update", action, project })}\n\n`);
         }
 
         res.writeHead(200, { "Content-Type": "application/json" });
@@ -505,6 +533,19 @@ const server = http.createServer((req, res) => {
         res.end(JSON.stringify({ error: e.message }));
       }
     });
+    return;
+  }
+
+  if (url.pathname === "/api/events") {
+    res.writeHead(200, {
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache",
+      "Connection": "keep-alive",
+      "Access-Control-Allow-Origin": "*",
+    });
+    res.write(": connected\n\n");
+    sseClients.add(res);
+    req.on("close", () => sseClients.delete(res));
     return;
   }
 

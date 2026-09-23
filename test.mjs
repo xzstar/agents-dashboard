@@ -248,6 +248,29 @@ try {
   check("No edit test artifacts in tasks.md", !cleanTasks.includes("__edit_"));
   check("No edit test artifacts in goals.md", !cleanGoals.includes("__goal_edit_"));
 
+  // Test 28: Agent start_task moves todo → in-progress
+  await post("/api/tasks", { project: PROJECT, action: "add", status: "todo", text: "__start_task_test__" });
+  const startResult = await post("/api/agent-update", { project: PROJECT, action: "start_task", text: "__start_task_test__" });
+  check("agent-update start_task returns ok", startResult.ok === true);
+  check("agent-update start_task reports started", startResult.task === "started");
+  const afterStart = await get("/api/projects");
+  const afterStartProj = afterStart.projects.find(p => p.name === PROJECT);
+  check("start_task: removed from todo", !(afterStartProj?.tasks?.todo || []).includes("__start_task_test__"));
+  check("start_task: added to in-progress", (afterStartProj?.tasks?.["in-progress"] || []).includes("__start_task_test__"));
+
+  // Test 29: Agent start_task on already in-progress task is idempotent
+  const startAgain = await post("/api/agent-update", { project: PROJECT, action: "start_task", text: "__start_task_test__" });
+  check("start_task on in-progress is idempotent", startAgain.ok === true && startAgain.task === "already_in_progress");
+
+  // Test 30: Agent start_task on non-existent task returns error
+  const startMissing = await post("/api/agent-update", { project: PROJECT, action: "start_task", text: "__nonexistent_task__" });
+  check("start_task on missing task returns error", !!startMissing.error);
+
+  // Test 31: Cleanup start_task test artifacts
+  await post("/api/agent-update", { project: PROJECT, action: "delete_task", status: "in-progress", text: "__start_task_test__" });
+  const cleanStart = readFile(TASKS_FILE);
+  check("No start_task artifacts remain", !cleanStart.includes("__start_task_test__"));
+
 } catch (e) {
   failed++;
   results.push(`  ✗ Unexpected error: ${e.message}`);

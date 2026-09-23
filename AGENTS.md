@@ -34,6 +34,11 @@ Content-Type: application/json
 
 **常用操作示例：**
 
+开始处理任务（移到 In Progress）：
+```json
+{"project": "项目名", "action": "start_task", "text": "任务描述"}
+```
+
 完成任务：
 ```json
 {"project": "项目名", "action": "complete_task", "text": "任务描述"}

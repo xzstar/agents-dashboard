@@ -501,6 +501,15 @@
 
     load();
     setupEventDelegation();
+
+    // ── SSE: auto-refresh when agent updates via API ──
+    const evtSource = new EventSource("/api/events");
+    evtSource.onmessage = (e) => {
+      try {
+        const data = JSON.parse(e.data);
+        if (data.type === "agent-update") load();
+      } catch (err) {}
+    };
     document.getElementById("refresh-btn").addEventListener("click", () => load());
 
     // ── Motivational quotes ──
