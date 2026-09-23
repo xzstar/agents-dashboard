@@ -208,9 +208,6 @@
           ? items.map(t => `<div class="task" draggable="true" data-text="${escAttr(t.text)}" data-project="${escAttr(t.project)}" data-status="${status}"><span class="proj-tag ${projectColors[t.project]||'t4'}">${esc(t.project)}</span><br>${esc(t.text)}<button class="del-btn" title="Delete">×</button></div>`).join("")
           : "";
           col.insertAdjacentHTML("beforeend", `<button class="add-btn" data-col="${status}">+ Add Task</button>`);
-          bindDragAndDrop(status);
-          bindDelete();
-          bindAdd();
       }
 
       const tlMap = {};
@@ -233,61 +230,64 @@
     function esc(s) { const d = document.createElement("div"); d.textContent = s; return d.innerHTML; }
     function escAttr(s) { return s.replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
 
-    function bindDragAndDrop(dropStatus) {
-      const col = document.getElementById("col-" + dropStatus);
-      col.addEventListener("dragover", e => { e.preventDefault(); col.classList.add("drag-over"); });
-      col.addEventListener("dragleave", () => col.classList.remove("drag-over"));
-      col.addEventListener("drop", async e => {
-        e.preventDefault();
-        col.classList.remove("drag-over");
-        try {
-          const data = JSON.parse(e.dataTransfer.getData("text/plain"));
-          if (data.status === dropStatus) return;
-          await fetch("/api/tasks", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ project: data.project, action: "move", status: data.status, to: dropStatus, text: data.text }) });
-          load();
-        } catch (err) { console.error(err); }
-      });
-      document.querySelectorAll(".task").forEach(el => {
-        el.addEventListener("dragstart", e => {
-          e.dataTransfer.setData("text/plain", JSON.stringify({ text: el.dataset.text, project: el.dataset.project, status: el.dataset.status }));
-          el.classList.add("dragging");
+    function setupEventDelegation() {
+      for (const status of ["todo", "in-progress", "done"]) {
+        const col = document.getElementById("col-" + status);
+        col.addEventListener("dragover", e => { e.preventDefault(); col.classList.add("drag-over"); });
+        col.addEventListener("dragleave", () => col.classList.remove("drag-over"));
+        col.addEventListener("drop", async e => {
+          e.preventDefault();
+          col.classList.remove("drag-over");
+          try {
+            const data = JSON.parse(e.dataTransfer.getData("text/plain"));
+            if (data.status === status) return;
+            await fetch("/api/tasks", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ project: data.project, action: "move", status: data.status, to: status, text: data.text }) });
+            load();
+          } catch (err) { console.error(err); }
         });
-        el.addEventListener("dragend", () => el.classList.remove("dragging"));
-      });
-    }
+      }
 
-    function bindDelete() {
-      document.querySelectorAll(".del-btn").forEach(btn => {
-        btn.addEventListener("click", async e => {
-          e.stopPropagation();
-          const task = btn.closest(".task");
+      document.addEventListener("dragstart", e => {
+        const task = e.target.closest(".task");
+        if (!task) return;
+        e.dataTransfer.setData("text/plain", JSON.stringify({ text: task.dataset.text, project: task.dataset.project, status: task.dataset.status }));
+        task.classList.add("dragging");
+      });
+      document.addEventListener("dragend", e => {
+        const task = e.target.closest(".task");
+        if (task) task.classList.remove("dragging");
+      });
+
+      document.addEventListener("click", async e => {
+        const delBtn = e.target.closest(".del-btn");
+        if (delBtn) {
+          const task = delBtn.closest(".task");
           await fetch("/api/tasks", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ project: task.dataset.project, action: "delete", status: task.dataset.status, text: task.dataset.text }) });
           load();
-        });
-      });
-    }
-
-    function bindAdd() {
-      document.querySelectorAll(".add-btn").forEach(btn => {
-        btn.addEventListener("click", () => {
+          return;
+        }
+        const addBtn = e.target.closest(".add-btn");
+        if (addBtn) {
           const form = document.createElement("div");
           form.className = "add-form";
-          form.innerHTML = `<input type="text" placeholder="Task description…" autofocus><button>OK</button>`;
-          btn.replaceWith(form);
+          form.innerHTML = `<input type="text" placeholder="Task description…"><button>OK</button>`;
+          addBtn.replaceWith(form);
           form.querySelector("input").focus();
           const submit = async () => {
             const text = form.querySelector("input").value.trim();
-            if (!text) { form.replaceWith(btn); return; }
+            if (!text) { form.replaceWith(addBtn); return; }
             const project = selectedProject || "Agents Dashboard";
-            await fetch("/api/tasks", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ project, action: "add", status: btn.dataset.col, text }) });
+            await fetch("/api/tasks", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ project, action: "add", status: addBtn.dataset.col, text }) });
             load();
           };
           form.querySelector("button").addEventListener("click", submit);
-          form.querySelector("input").addEventListener("keydown", e => { if (e.key === "Enter") submit(); if (e.key === "Escape") form.replaceWith(btn); });
-        });
+          form.querySelector("input").addEventListener("keydown", ev => { if (ev.key === "Enter") submit(); if (ev.key === "Escape") form.replaceWith(addBtn); });
+        }
       });
     }
+
     load();
+    setupEventDelegation();
     setInterval(load, 5000);
   </script>
 </body>
