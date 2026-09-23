@@ -17,3 +17,4 @@
 - 时间线条目改为紧凑列表，减少垂直空间占用
 - 全部 9 个项目目录添加 AGENTS.md，确保 Agent 自动更新 `.dashboard/` 文件
 - 新增 `.dashboard/goals.md`（大目标 checkbox 列表）和 `status.md` 的 `description` 字段，前端展示项目描述和目标清单
+- 实现三个 Todo：①描述/目标在线编辑（POST /api/description + goals 增删）②暗色主题切换（localStorage 持久化）③时间线日视图（List/Day 切换）

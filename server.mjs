@@ -256,20 +256,61 @@ const server = http.createServer((req, res) => {
     req.on("end", () => {
       try {
         const { project, text, done } = JSON.parse(body);
+        const { action } = JSON.parse(body);
         const projectDir = findProjectDir(project, ROOT);
         if (!projectDir) { res.writeHead(404, { "Content-Type": "application/json" }); res.end(JSON.stringify({ error: "Project not found" })); return; }
         const goalsPath = path.join(projectDir, ".dashboard", "goals.md");
         if (!fs.existsSync(goalsPath)) { res.writeHead(404, { "Content-Type": "application/json" }); res.end(JSON.stringify({ error: "goals.md not found" })); return; }
         let content = fs.readFileSync(goalsPath, "utf-8");
-        const lines = content.split("\n");
-        for (let i = 0; i < lines.length; i++) {
-          const m = lines[i].match(/^(\s*-\s\[)( |x|X)(\]\s)(.*)/);
-          if (m && m[4].trim() === text.trim()) {
-            lines[i] = `${m[1]}${done ? "x" : " "}${m[3]}${m[4]}`;
-            break;
+        if (action === "add") {
+          content = content.replace(/\n*$/, "\n") + `- [ ] ${text}\n`;
+        } else if (action === "delete") {
+          const lines = content.split("\n");
+          const filtered = lines.filter(l => {
+            const m = l.match(/^\s*-\s\[( |x|X)\]\s(.*)/);
+            return !(m && m[2].trim() === text.trim());
+          });
+          content = filtered.join("\n");
+        } else {
+          const lines = content.split("\n");
+          for (let i = 0; i < lines.length; i++) {
+            const m = lines[i].match(/^(\s*-\s\[)( |x|X)(\]\s)(.*)/);
+            if (m && m[4].trim() === text.trim()) {
+              lines[i] = `${m[1]}${done ? "x" : " "}${m[3]}${m[4]}`;
+              break;
+            }
           }
+          content = lines.join("\n");
         }
-        fs.writeFileSync(goalsPath, lines.join("\n"));
+        fs.writeFileSync(goalsPath, content);
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: true }));
+      } catch (e) {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: e.message }));
+      }
+    });
+    return;
+  }
+
+  if (url.pathname === "/api/description" && req.method === "POST") {
+    let body = "";
+    req.on("data", chunk => body += chunk);
+    req.on("end", () => {
+      try {
+        const { project, description } = JSON.parse(body);
+        const projectDir = findProjectDir(project, ROOT);
+        if (!projectDir) { res.writeHead(404, { "Content-Type": "application/json" }); res.end(JSON.stringify({ error: "Project not found" })); return; }
+        const statusPath = path.join(projectDir, ".dashboard", "status.md");
+        if (!fs.existsSync(statusPath)) { res.writeHead(404, { "Content-Type": "application/json" }); res.end(JSON.stringify({ error: "status.md not found" })); return; }
+        let content = fs.readFileSync(statusPath, "utf-8");
+        const safeDesc = description.replace(/\n/g, " ").trim();
+        if (content.includes("description:")) {
+          content = content.replace(/^description:.*$/m, `description: ${safeDesc}`);
+        } else {
+          content = content.replace(/^(summary:.*$)/m, `$1\ndescription: ${safeDesc}`);
+        }
+        fs.writeFileSync(statusPath, content);
         res.writeHead(200, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ ok: true }));
       } catch (e) {

@@ -2,7 +2,6 @@
 
 ## Todo
 
-
 ## In Progress
 
 
@@ -22,3 +21,6 @@
 - [x] 全部 9 个项目添加 AGENTS.md 自动更新规则
 - [x] 左侧栏项目列表 + 点击筛选
 - [x] 每个项目添加基本描述（description 字段）和大目标 checkbox 列表（goals.md）
+- [x] 支持在 dashboard 上直接编辑项目描述和目标
+- [x] 暗色主题切换
+- [x] 添加项目时间线日视图
