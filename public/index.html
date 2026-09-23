@@ -73,6 +73,10 @@
     .col-header h2 { font-size: 13px; font-weight: 600; }
     .col-header .count { margin-left: auto; font-size: 11px; font-weight: 600; padding: 1px 8px; border-radius: var(--radius-full); background: var(--surface-muted); color: var(--faint); }
     .col-body { padding: 10px; display: flex; flex-direction: column; gap: 8px; min-height: 160px; }
+    .col-footer { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; border-top: 1px solid var(--border); font-size: 11px; color: var(--faint); }
+    .col-footer button { border: 1px solid var(--border); background: var(--surface); color: var(--muted); font-size: 11px; padding: 2px 10px; border-radius: var(--radius-sm); cursor: pointer; transition: border-color .12s ease; }
+    .col-footer button:hover:not(:disabled) { border-color: var(--accent-border); color: var(--accent); }
+    .col-footer button:disabled { opacity: .35; cursor: default; }
 
     .task { position: relative; padding: 10px 28px 10px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); font-size: 13px; line-height: 1.45; transition: border-color .15s ease, box-shadow .15s ease; cursor: grab; }
     .task:hover { border-color: var(--accent-border); box-shadow: var(--sh-sm); }
@@ -138,14 +142,17 @@
         <div class="col todo">
           <div class="col-header"><span class="icon"></span><h2>Todo</h2><span class="count" id="count-todo"></span></div>
           <div class="col-body" id="col-todo"></div>
+          <div class="col-footer" id="footer-todo" style="display:none"><button id="prev-todo">‹ Prev</button><span id="page-todo"></span><button id="next-todo">Next ›</button></div>
         </div>
         <div class="col in-progress">
           <div class="col-header"><span class="icon"></span><h2>In Progress</h2><span class="count" id="count-in-progress"></span></div>
           <div class="col-body" id="col-in-progress"></div>
+          <div class="col-footer" id="footer-in-progress" style="display:none"><button id="prev-in-progress">‹ Prev</button><span id="page-in-progress"></span><button id="next-in-progress">Next ›</button></div>
         </div>
         <div class="col done">
           <div class="col-header"><span class="icon"></span><h2>Done</h2><span class="count" id="count-done"></span></div>
           <div class="col-body" id="col-done"></div>
+          <div class="col-footer" id="footer-done" style="display:none"><button id="prev-done">‹ Prev</button><span id="page-done"></span><button id="next-done">Next ›</button></div>
         </div>
       </div>
       <div class="timeline-section">
@@ -156,6 +163,8 @@
   </div>
   <script>
     const projectColors = {};
+    const PAGE_SIZE = 10;
+    const pageState = { todo: 0, "in-progress": 0, done: 0 };
     let colorIdx = 0;
     const colorClasses = ["t0","t1","t2","t3","t4"];
     let selectedProject = null;
@@ -205,11 +214,24 @@
       for (const status of ["todo", "in-progress", "done"]) {
         const col = document.getElementById("col-" + status);
         const items = all[status];
+        const totalPages = Math.max(1, Math.ceil(items.length / PAGE_SIZE));
+        if (pageState[status] >= totalPages) pageState[status] = totalPages - 1;
+        const start = pageState[status] * PAGE_SIZE;
+        const pageItems = items.slice(start, start + PAGE_SIZE);
         document.getElementById("count-" + status).textContent = items.length;
-          col.innerHTML = items.length
-          ? items.map(t => `<div class="task" draggable="true" data-text="${escAttr(t.text)}" data-project="${escAttr(t.project)}" data-status="${status}"><span class="proj-tag ${projectColors[t.project]||'t4'}">${esc(t.project)}</span><br>${esc(t.text)}<button class="del-btn" title="Delete">×</button></div>`).join("")
+          col.innerHTML = pageItems.length
+          ? pageItems.map(t => `<div class="task" draggable="true" data-text="${escAttr(t.text)}" data-project="${escAttr(t.project)}" data-status="${status}"><span class="proj-tag ${projectColors[t.project]||'t4'}">${esc(t.project)}</span><br>${esc(t.text)}<button class="del-btn" title="Delete">×</button></div>`).join("")
           : "";
           col.insertAdjacentHTML("beforeend", `<button class="add-btn" data-col="${status}">+ Add Task</button>`);
+          const footer = document.getElementById("footer-" + status);
+          if (totalPages > 1) {
+            footer.style.display = "flex";
+            document.getElementById("page-" + status).textContent = `${pageState[status]+1} / ${totalPages}`;
+            document.getElementById("prev-" + status).disabled = pageState[status] === 0;
+            document.getElementById("next-" + status).disabled = pageState[status] >= totalPages - 1;
+          } else {
+            footer.style.display = "none";
+          }
       }
 
       const tlMap = {};
@@ -233,6 +255,10 @@
     function escAttr(s) { return s.replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
 
     function setupEventDelegation() {
+      for (const status of ["todo", "in-progress", "done"]) {
+        document.getElementById("prev-" + status).addEventListener("click", () => { if (pageState[status] > 0) { pageState[status]--; renderBoard(cachedData.projects); } });
+        document.getElementById("next-" + status).addEventListener("click", () => { pageState[status]++; renderBoard(cachedData.projects); });
+      }
       let isProcessing = false;
       for (const status of ["todo", "in-progress", "done"]) {
         const col = document.getElementById("col-" + status);
