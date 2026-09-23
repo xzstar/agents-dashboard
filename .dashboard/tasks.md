@@ -8,7 +8,7 @@
 
 ## In Progress
 
-- [ ] 重构 dashboard 为 Kanban 看板展示
+- [ ] 接入更多项目目录并验证自动更新流程
 
 ## Done
 
@@ -16,3 +16,5 @@
 - [x] 确定方案：Markdown + YAML frontmatter，`.dashboard/` 目录，本地 Node 服务
 - [x] 创建 server.mjs（零依赖）、public/index.html、.dashboard/ 框架文件、AGENTS.md
 - [x] 编写 AGENTS.md 自动更新规则
+- [x] 重构 dashboard 为 Kanban 看板展示
+- [x] 添加项目时间线视图

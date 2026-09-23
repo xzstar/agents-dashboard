@@ -6,89 +6,115 @@
   <title>Agents Dashboard</title>
   <style>
     :root {
-      --bg: #0a0a0f; --surface: #141419; --border: #26262e;
-      --text: #e8e8ed; --text2: #71717a; --accent: #7c6ff0;
-      --green: #34d399; --yellow: #fbbf24;
-      --card-bg: #1a1a22; --card-hover: #202029;
+      --bg: #f4f5f8;
+      --surface: #ffffff;
+      --surface-muted: #f7f8fa;
+      --surface-hover: #f3f4f8;
+      --fg: #1a2233;
+      --muted: #566078;
+      --faint: #8a92a8;
+      --border: #e3e6ee;
+      --border-strong: #c8cedb;
+      --accent: #4f56e8;
+      --accent-soft: #eef0fe;
+      --accent-border: #c5caf8;
+      --success: #1d9a63;
+      --success-soft: #e4f5ed;
+      --warning: #c07a12;
+      --warning-soft: #fbf1de;
+      --info: #2b7bd8;
+      --info-soft: #e8f1fc;
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 14px;
+      --radius-full: 999px;
+      --sh-sm: 0 1px 2px rgba(18,26,44,.05);
+      --sh-md: 0 2px 8px rgba(18,26,44,.05), 0 8px 24px rgba(18,26,44,.06);
+      --font: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", "Segoe UI", Inter, system-ui, sans-serif;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+    body { font-family: var(--font); font-size: 14px; line-height: 1.55; background: var(--bg); color: var(--fg); min-height: 100vh; }
 
-    .header { padding: 1.5rem 2rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
-    .header h1 { font-size: 1.15rem; font-weight: 700; letter-spacing: -.02em; }
-    .header .sub { color: var(--text2); font-size: .78rem; }
+    /* Top bar */
+    .topbar { position: sticky; top: 0; z-index: 100; display: flex; align-items: center; justify-content: space-between; height: 56px; padding: 0 24px; background: var(--surface); border-bottom: 1px solid var(--border); }
+    .topbar-left { display: flex; align-items: center; gap: 12px; }
+    .topbar h1 { font-size: 15px; font-weight: 600; }
+    .topbar .root-label { font-size: 12px; color: var(--faint); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .topbar .fetched { font-size: 11px; color: var(--faint); }
 
-    .projects { padding: 1rem 2rem; display: flex; flex-wrap: wrap; gap: .5rem; }
-    .proj-pill { display: inline-flex; align-items: center; gap: .4rem; background: var(--surface); border: 1px solid var(--border); border-radius: 999px; padding: .3rem .8rem; font-size: .78rem; cursor: default; }
-    .proj-pill .dot { width: 7px; height: 7px; border-radius: 50%; }
-    .proj-pill .dot.active { background: var(--green); }
-    .proj-pill .dot.paused { background: var(--yellow); }
+    /* Project pills */
+    .projects { padding: 16px 24px 0; display: flex; flex-wrap: wrap; gap: 8px; }
+    .proj-pill { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-full); font-size: 12px; font-weight: 500; color: var(--muted); }
+    .proj-pill .dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+    .proj-pill .dot.active { background: var(--success); }
+    .proj-pill .dot.paused { background: var(--warning); }
     .proj-pill .dot.done { background: var(--accent); }
-    .proj-pill .dot.archived { background: var(--text2); }
+    .proj-pill .dot.archived { background: var(--faint); }
 
-    .kanban { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; padding: 1rem 2rem 3rem; }
-    @media (max-width: 800px) { .kanban { grid-template-columns: 1fr; } }
-    .col { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
-    .col-header { padding: .85rem 1rem; display: flex; align-items: center; gap: .5rem; border-bottom: 1px solid var(--border); }
-    .col-header .icon { width: 8px; height: 8px; border-radius: 2px; }
-    .col-header h2 { font-size: .82rem; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; }
-    .col-header .count-badge { font-size: .68rem; background: var(--bg); border-radius: 999px; padding: .1rem .5rem; color: var(--text2); margin-left: auto; }
-    .col-body { padding: .75rem; display: flex; flex-direction: column; gap: .5rem; min-height: 200px; }
+    /* Kanban */
+    .kanban { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; padding: 16px 24px; }
+    @media (max-width: 860px) { .kanban { grid-template-columns: 1fr; } }
+    .col { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--sh-sm); overflow: hidden; }
+    .col-header { display: flex; align-items: center; gap: 8px; padding: 12px 16px; border-bottom: 1px solid var(--border); }
+    .col-header .icon { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .col.todo .icon { background: var(--faint); }
+    .col.in-progress .icon { background: var(--warning); }
+    .col.done .icon { background: var(--success); }
+    .col-header h2 { font-size: 13px; font-weight: 600; color: var(--fg); }
+    .col-header .count { margin-left: auto; font-size: 11px; font-weight: 600; padding: 1px 8px; border-radius: var(--radius-full); background: var(--surface-muted); color: var(--faint); }
+    .col-body { padding: 10px; display: flex; flex-direction: column; gap: 8px; min-height: 180px; }
 
-    .task { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: .7rem .85rem; font-size: .82rem; line-height: 1.45; transition: border-color .15s, background .15s; }
-    .task:hover { border-color: var(--accent); background: var(--card-hover); }
-    .task .proj-tag { display: inline-block; font-size: .65rem; font-weight: 600; padding: .05rem .45rem; border-radius: 4px; margin-bottom: .3rem; }
-    .task .proj-tag.t0 { background: rgba(124,111,240,.15); color: var(--accent); }
-    .task .proj-tag.t1 { background: rgba(52,211,153,.15); color: var(--green); }
-    .task .proj-tag.t2 { background: rgba(251,191,36,.15); color: var(--yellow); }
-    .task .proj-tag.t3 { background: rgba(248,113,113,.15); color: #f87171; }
-    .task .proj-tag.t4 { background: rgba(255,255,255,.08); color: var(--text2); }
-
-    .col.todo .icon { background: var(--text2); }
-    .col.in-progress .icon { background: var(--yellow); }
-    .col.done .icon { background: var(--green); }
-    .col.done .task { opacity: .6; }
+    /* Task cards */
+    .task { padding: 10px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); font-size: 13px; line-height: 1.45; transition: border-color .15s ease, box-shadow .15s ease; }
+    .task:hover { border-color: var(--accent-border); box-shadow: var(--sh-sm); }
+    .task .proj-tag { display: inline-block; font-size: 10px; font-weight: 600; padding: 1px 6px; border-radius: 4px; margin-bottom: 4px; }
+    .task .proj-tag.t0 { background: var(--accent-soft); color: var(--accent); }
+    .task .proj-tag.t1 { background: var(--success-soft); color: var(--success); }
+    .task .proj-tag.t2 { background: #fbf1de; color: var(--warning); }
+    .task .proj-tag.t3 { background: #fcebed; color: #d83a48; }
+    .task .proj-tag.t4 { background: var(--surface-muted); color: var(--faint); }
+    .col.done .task { opacity: .55; }
     .col.done .task:hover { opacity: 1; }
-    .empty { color: var(--text2); font-size: .78rem; text-align: center; padding: 2rem 0; }
+    .empty { text-align: center; color: var(--faint); font-size: 12px; padding: 2.5rem 0; }
 
     /* Timeline */
-    .timeline-section { padding: 0 2rem 3rem; }
-    .timeline-title { font-size: .82rem; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--text2); margin-bottom: 1rem; }
-    .timeline { position: relative; padding-left: 1.5rem; }
-    .timeline::before { content: ''; position: absolute; left: 6px; top: 4px; bottom: 4px; width: 2px; background: var(--border); }
-    .tl-entry { position: relative; margin-bottom: 1.25rem; }
-    .tl-entry::before { content: ''; position: absolute; left: -1.5rem; top: 6px; width: 10px; height: 10px; border-radius: 50%; background: var(--green); border: 2px solid var(--bg); }
-    .tl-date { font-size: .75rem; font-weight: 600; color: var(--text2); margin-bottom: .35rem; }
-    .tl-items { display: flex; flex-direction: column; gap: .3rem; }
-    .tl-item { font-size: .8rem; line-height: 1.5; padding: .4rem .65rem; background: var(--card-bg); border: 1px solid var(--border); border-radius: 6px; display: flex; align-items: baseline; gap: .5rem; }
-    .tl-item .proj-tag { display: inline-block; font-size: .62rem; font-weight: 600; padding: .05rem .4rem; border-radius: 4px; flex-shrink: 0; }
-    .tl-item .proj-tag.t0 { background: rgba(124,111,240,.15); color: var(--accent); }
-    .tl-item .proj-tag.t1 { background: rgba(52,211,153,.15); color: var(--green); }
-    .tl-item .proj-tag.t2 { background: rgba(251,191,36,.15); color: var(--yellow); }
-    .tl-item .proj-tag.t3 { background: rgba(248,113,113,.15); color: #f87171; }
-    .tl-item .proj-tag.t4 { background: rgba(255,255,255,.08); color: var(--text2); }
+    .timeline-section { padding: 0 24px 48px; }
+    .timeline-title { font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 12px; padding-left: 2px; }
+    .timeline { position: relative; padding-left: 20px; }
+    .timeline::before { content: ''; position: absolute; left: 5px; top: 6px; bottom: 6px; width: 2px; background: var(--border); border-radius: 1px; }
+    .tl-entry { position: relative; margin-bottom: 16px; }
+    .tl-entry::before { content: ''; position: absolute; left: -20px; top: 5px; width: 8px; height: 8px; border-radius: 50%; background: var(--success); border: 2px solid var(--bg); }
+    .tl-date { font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 6px; }
+    .tl-items { display: flex; flex-direction: column; gap: 4px; }
+    .tl-item { display: flex; align-items: baseline; gap: 8px; font-size: 13px; padding: 6px 10px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); }
+    .tl-item .proj-tag { font-size: 10px; font-weight: 600; padding: 1px 6px; border-radius: 4px; flex-shrink: 0; }
+    .tl-item .proj-tag.t0 { background: var(--accent-soft); color: var(--accent); }
+    .tl-item .proj-tag.t1 { background: var(--success-soft); color: var(--success); }
+    .tl-item .proj-tag.t2 { background: #fbf1de; color: var(--warning); }
+    .tl-item .proj-tag.t3 { background: #fcebed; color: #d83a48; }
+    .tl-item .proj-tag.t4 { background: var(--surface-muted); color: var(--faint); }
   </style>
 </head>
 <body>
-  <div class="header">
-    <div>
+  <div class="topbar">
+    <div class="topbar-left">
       <h1>Agents Dashboard</h1>
-      <div class="sub" id="root-label"></div>
+      <span class="root-label" id="root-label"></span>
     </div>
-    <div class="sub" id="fetched-at"></div>
+    <span class="fetched" id="fetched-at"></span>
   </div>
   <div class="projects" id="projects"></div>
   <div class="kanban">
     <div class="col todo">
-      <div class="col-header"><span class="icon"></span><h2>Todo</h2><span class="count-badge" id="count-todo"></span></div>
+      <div class="col-header"><span class="icon"></span><h2>Todo</h2><span class="count" id="count-todo"></span></div>
       <div class="col-body" id="col-todo"></div>
     </div>
     <div class="col in-progress">
-      <div class="col-header"><span class="icon"></span><h2>In Progress</h2><span class="count-badge" id="count-in-progress"></span></div>
+      <div class="col-header"><span class="icon"></span><h2>In Progress</h2><span class="count" id="count-in-progress"></span></div>
       <div class="col-body" id="col-in-progress"></div>
     </div>
     <div class="col done">
-      <div class="col-header"><span class="icon"></span><h2>Done</h2><span class="count-badge" id="count-done"></span></div>
+      <div class="col-header"><span class="icon"></span><h2>Done</h2><span class="count" id="count-done"></span></div>
       <div class="col-body" id="col-done"></div>
     </div>
   </div>
@@ -131,7 +157,6 @@
             : `<div class="empty">—</div>`;
         }
 
-        // timeline: aggregate changelog entries from all projects
         const tlMap = {};
         for (const p of projects) {
           for (const entry of (p.changelog || [])) {
