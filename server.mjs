@@ -154,6 +154,15 @@ function writeTasks(tasksPath, sections) {
   fs.writeFileSync(tasksPath, out);
 }
 
+function parseGoals(content) {
+  const goals = [];
+  for (const raw of content.split("\n")) {
+    const item = raw.match(/^\s*-\s\[( |x|X)\]\s(.*)/);
+    if (item) goals.push({ text: item[2].trim(), done: item[1].toLowerCase() === "x" });
+  }
+  return goals;
+}
+
 // ---------- Project scanner ----------
 function scanProjects(root, depth = 0) {
   if (depth > 3) return [];
@@ -168,12 +177,15 @@ function scanProjects(root, depth = 0) {
       const changelogPath = path.join(dashDir, "changelog.md");
       const tasksRaw = fs.existsSync(tasksPath) ? fs.readFileSync(tasksPath, "utf-8") : "";
       const changelogRaw = fs.existsSync(changelogPath) ? fs.readFileSync(changelogPath, "utf-8") : "";
+      const goalsPath = path.join(dashDir, "goals.md");
+      const goalsRaw = fs.existsSync(goalsPath) ? fs.readFileSync(goalsPath, "utf-8") : "";
       results.push({
         path: path.relative(ROOT, root) || ".",
         name: meta.project || path.basename(root),
         meta,
         body: mdToHtml(body),
         tasks: parseTasks(tasksRaw),
+        goals: parseGoals(goalsRaw),
         changelog: parseChangelog(changelogRaw),
       });
     }
@@ -228,6 +240,36 @@ const server = http.createServer((req, res) => {
           res.writeHead(400, { "Content-Type": "application/json" }); res.end(JSON.stringify({ error: "Unknown action" })); return;
         }
         writeTasks(tasksPath, sections);
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: true }));
+      } catch (e) {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: e.message }));
+      }
+    });
+    return;
+  }
+
+  if (url.pathname === "/api/goals" && req.method === "POST") {
+    let body = "";
+    req.on("data", chunk => body += chunk);
+    req.on("end", () => {
+      try {
+        const { project, text, done } = JSON.parse(body);
+        const projectDir = findProjectDir(project, ROOT);
+        if (!projectDir) { res.writeHead(404, { "Content-Type": "application/json" }); res.end(JSON.stringify({ error: "Project not found" })); return; }
+        const goalsPath = path.join(projectDir, ".dashboard", "goals.md");
+        if (!fs.existsSync(goalsPath)) { res.writeHead(404, { "Content-Type": "application/json" }); res.end(JSON.stringify({ error: "goals.md not found" })); return; }
+        let content = fs.readFileSync(goalsPath, "utf-8");
+        const lines = content.split("\n");
+        for (let i = 0; i < lines.length; i++) {
+          const m = lines[i].match(/^(\s*-\s\[)( |x|X)(\]\s)(.*)/);
+          if (m && m[4].trim() === text.trim()) {
+            lines[i] = `${m[1]}${done ? "x" : " "}${m[3]}${m[4]}`;
+            break;
+          }
+        }
+        fs.writeFileSync(goalsPath, lines.join("\n"));
         res.writeHead(200, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ ok: true }));
       } catch (e) {

@@ -16,3 +16,4 @@
 - 修复拖拽重复创建：事件委托替代逐次绑定，客户端加请求锁，服务端写入前去重
 - 时间线条目改为紧凑列表，减少垂直空间占用
 - 全部 9 个项目目录添加 AGENTS.md，确保 Agent 自动更新 `.dashboard/` 文件
+- 新增 `.dashboard/goals.md`（大目标 checkbox 列表）和 `status.md` 的 `description` 字段，前端展示项目描述和目标清单

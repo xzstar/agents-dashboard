@@ -56,6 +56,17 @@
     .proj-item .name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .sidebar-footer { margin-top: auto; padding: 12px 16px; border-top: 1px solid var(--border); font-size: 10px; color: var(--faint); }
 
+    /* Description + Goals */
+    .info-section { padding: 0 24px 8px; }
+    .info-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--sh-sm); padding: 16px 20px; }
+    .info-card .desc { font-size: 13px; color: var(--muted); line-height: 1.55; margin-bottom: 12px; }
+    .info-card .goals-title { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--faint); margin-bottom: 8px; }
+    .goal-item { display: flex; align-items: baseline; gap: 8px; font-size: 13px; padding: 4px 0; line-height: 1.45; }
+    .goal-item .goal-box { flex-shrink: 0; width: 16px; height: 16px; display: inline-flex; align-items: center; justify-content: center; border: 1.5px solid var(--border-strong); border-radius: 4px; font-size: 11px; color: var(--success); background: var(--surface); cursor: pointer; transition: border-color .12s ease, background .12s ease; }
+    .goal-item.done .goal-box { background: var(--success); border-color: var(--success); color: #fff; }
+    .goal-item.done .goal-text { color: var(--faint); text-decoration: line-through; }
+    .goal-item .goal-text { color: var(--fg); }
+
     /* Main */
     .main { flex: 1; overflow-y: auto; }
     .main-header { position: sticky; top: 0; z-index: 10; display: flex; align-items: center; justify-content: space-between; padding: 14px 24px; background: var(--bg); border-bottom: 1px solid var(--border); }
@@ -138,6 +149,13 @@
       <div class="main-header">
         <h2 id="main-title">All Projects</h2>
       </div>
+      <div class="info-section" id="info-section" style="display:none">
+        <div class="info-card">
+          <div class="desc" id="proj-desc"></div>
+          <div class="goals-title">Goals</div>
+          <div id="goals-list"></div>
+        </div>
+      </div>
       <div class="kanban">
         <div class="col todo">
           <div class="col-header"><span class="icon"></span><h2>Todo</h2><span class="count" id="count-todo"></span></div>
@@ -201,6 +219,22 @@
     function renderBoard(projects) {
       const filtered = selectedProject ? projects.filter(p => p.name === selectedProject) : projects;
       document.getElementById("main-title").textContent = selectedProject || "All Projects";
+
+      // description + goals
+      const infoSection = document.getElementById("info-section");
+      if (selectedProject) {
+        const proj = filtered[0];
+        if (proj) {
+          infoSection.style.display = "block";
+          document.getElementById("proj-desc").textContent = proj.meta.description || proj.meta.summary || "";
+          const goalsList = document.getElementById("goals-list");
+          goalsList.innerHTML = (proj.goals || []).map((g, i) =>
+            `<div class="goal-item${g.done ? " done" : ""}"><span class="goal-box" data-goal-idx="${i}" data-goal-done="${g.done}">${g.done ? "✓" : ""}</span><span class="goal-text">${esc(g.text)}</span></div>`
+          ).join("") || `<div class="empty">No goals defined</div>`;
+        }
+      } else {
+        infoSection.style.display = "none";
+      }
 
       const all = { todo: [], "in-progress": [], done: [] };
       for (const p of filtered) {
@@ -291,6 +325,19 @@
       });
 
       document.addEventListener("click", async e => {
+        const goalBox = e.target.closest(".goal-box");
+        if (goalBox) {
+          if (isProcessing) return;
+          isProcessing = true;
+          const newDone = goalBox.dataset.goalDone !== "true";
+          const goalText = goalBox.closest(".goal-item").querySelector(".goal-text").textContent;
+          const project = selectedProject || "Agents Dashboard";
+          try {
+            await fetch("/api/goals", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ project, text: goalText, done: newDone }) });
+          } finally { isProcessing = false; }
+          load();
+          return;
+        }
         if (isProcessing) return;
         const delBtn = e.target.closest(".del-btn");
         if (delBtn) {
