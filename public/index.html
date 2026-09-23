@@ -111,6 +111,8 @@
     .main-header { position: sticky; top: 0; z-index: 10; display: flex; align-items: center; justify-content: space-between; padding: 14px 24px; background: var(--bg); border-bottom: 1px solid var(--border); }
     .main-header h2 { font-size: 15px; font-weight: 600; }
     .main-header .fetched { font-size: 11px; color: var(--faint); }
+    .main-header .refresh-btn { border: 1px solid var(--border); background: var(--surface); color: var(--muted); font-size: 12px; padding: 4px 14px; border-radius: var(--radius-sm); cursor: pointer; transition: border-color .12s ease, color .12s ease; }
+    .main-header .refresh-btn:hover { border-color: var(--accent-border); color: var(--accent); }
 
     .kanban { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; padding: 16px 24px; }
     @media (max-width: 860px) { .kanban { grid-template-columns: 1fr; } }
@@ -191,6 +193,7 @@
     <div class="main">
       <div class="main-header">
         <h2 id="main-title">All Projects</h2>
+        <button class="refresh-btn" id="refresh-btn">↻ 刷新</button>
       </div>
       <div class="info-section" id="info-section" style="display:none">
         <div class="info-card">
@@ -445,6 +448,7 @@
 
     load();
     setupEventDelegation();
+    document.getElementById("refresh-btn").addEventListener("click", () => load());
 
     // ── Theme toggle ──
     const savedTheme = localStorage.getItem("dashboard-theme") || "light";
@@ -521,7 +525,6 @@
       document.getElementById("timeline").style.display = "none";
       document.getElementById("timeline-day").style.display = "grid";
     });
-    setInterval(load, 5000);
   </script>
 </body>
 </html>
