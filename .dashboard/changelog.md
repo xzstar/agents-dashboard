@@ -4,6 +4,12 @@
 - delete task: __agent_test_task__
 - complete task: __agent_test_task__
 - add task: __agent_test_task__
+- delete task: __agent_test_task__
+- complete task: __agent_test_task__
+- add task: __agent_test_task__
+- delete task: __agent_test_task__
+- complete task: __agent_test_task__
+- add task: __agent_test_task__
 
 - 创建 `.dashboard/` 公共文档框架
 - 确定格式约定：Markdown 正文 + YAML frontmatter

@@ -99,6 +99,15 @@ try {
   const afterMoveProj = afterMove.projects.find(p => p.name === PROJECT);
   check("Move task to done works", (afterMoveProj?.tasks?.done || []).includes("__test_edited__"));
 
+  // Test 9b: Move task back (reverse direction)
+  await post("/api/tasks", { project: PROJECT, action: "move", status: "done", to: "todo", text: "__test_edited__" });
+  const afterMoveBack = await get("/api/projects");
+  const afterMoveBackProj = afterMoveBack.projects.find(p => p.name === PROJECT);
+  check("Move task back to todo works", (afterMoveBackProj?.tasks?.todo || []).includes("__test_edited__"));
+
+  // Test 9c: Clean up moved-back task
+  await post("/api/tasks", { project: PROJECT, action: "delete", status: "todo", text: "__test_edited__" });
+
   // Test 10: Delete task
   await post("/api/tasks", { project: PROJECT, action: "delete", status: "done", text: "__test_edited__" });
   const afterDelete = await get("/api/projects");

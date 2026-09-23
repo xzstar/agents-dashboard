@@ -30,3 +30,4 @@
 - [x] Goal 和 task 双击编辑文本
 - [x] 建立测试集（test.mjs 24 项测试）
 - [x] 支持 Agent 通过 API 自动更新（POST /api/agent-update）
+

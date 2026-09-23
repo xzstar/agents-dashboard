@@ -143,6 +143,9 @@
     .task .del-btn { position: absolute; top: 6px; right: 6px; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; border: none; background: transparent; color: var(--faint); font-size: 14px; line-height: 1; border-radius: 4px; cursor: pointer; opacity: 0; transition: opacity .12s ease, background .12s ease; }
     .task:hover .del-btn { opacity: 1; }
     .task .del-btn:hover { background: #fcebed; color: #d83a48; }
+    .task .move-btn { position: absolute; top: 6px; right: 24px; border: none; background: transparent; color: var(--faint); font-size: 14px; cursor: pointer; opacity: 0; transition: opacity .12s ease, color .12s ease; padding: 0 2px; }
+    .task:hover .move-btn { opacity: 1; }
+    .task .move-btn:hover { color: var(--accent); }
     .col-body.drag-over { outline: 2px dashed var(--accent-border); outline-offset: -4px; border-radius: var(--radius-md); background: var(--accent-soft); }
     .add-btn { display: flex; align-items: center; justify-content: center; gap: 4px; width: 100%; padding: 8px; border: 1px dashed var(--border); border-radius: var(--radius-md); background: transparent; color: var(--faint); font-size: 12px; cursor: pointer; transition: border-color .12s ease, color .12s ease; }
     .add-btn:hover { border-color: var(--accent-border); color: var(--accent); }
@@ -330,7 +333,7 @@
         const pageItems = items.slice(start, start + PAGE_SIZE);
         document.getElementById("count-" + status).textContent = items.length;
           col.innerHTML = pageItems.length
-          ? pageItems.map(t => `<div class="task" draggable="true" data-text="${escAttr(t.text)}" data-project="${escAttr(t.project)}" data-status="${status}"><span class="proj-tag ${projectColors[t.project]||'t4'}">${esc(t.project)}</span><br>${esc(t.text)}<button class="del-btn" title="Delete">×</button></div>`).join("")
+          ? pageItems.map(t => `<div class="task" draggable="true" data-text="${escAttr(t.text)}" data-project="${escAttr(t.project)}" data-status="${status}"><span class="proj-tag ${projectColors[t.project]||'t4'}">${esc(t.project)}</span><br>${esc(t.text)}<button class="move-btn" title="Move to next">→</button><button class="del-btn" title="Delete">×</button></div>`).join("")
           : "";
           col.insertAdjacentHTML("beforeend", `<button class="add-btn" data-col="${status}">+ Add Task</button>`);
           const footer = document.getElementById("footer-" + status);
@@ -376,7 +379,7 @@
       }
       for (const status of ["todo", "in-progress", "done"]) {
         const col = document.getElementById("col-" + status);
-        col.addEventListener("dragover", e => { e.preventDefault(); col.classList.add("drag-over"); });
+        col.addEventListener("dragover", e => { e.preventDefault(); if(e.dataTransfer) e.dataTransfer.dropEffect = "move"; col.classList.add("drag-over"); });
         col.addEventListener("dragleave", () => col.classList.remove("drag-over"));
         col.addEventListener("drop", async e => {
           e.preventDefault();
@@ -385,10 +388,8 @@
           try {
             const data = JSON.parse(e.dataTransfer.getData("text/plain"));
             if (data.status === status) return;
-            isProcessing = true;
             await fetch("/api/tasks", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ project: data.project, action: "move", status: data.status, to: status, text: data.text }) });
           } catch (err) { console.error(err); }
-          finally { isProcessing = false; }
           load();
         });
       }
@@ -396,6 +397,7 @@
       document.addEventListener("dragstart", e => {
         const task = e.target.closest(".task");
         if (!task) return;
+        e.dataTransfer.effectAllowed = "move";
         e.dataTransfer.setData("text/plain", JSON.stringify({ text: task.dataset.text, project: task.dataset.project, status: task.dataset.status }));
         task.classList.add("dragging");
       });
@@ -431,6 +433,16 @@
         if (delBtn) {
           const task = delBtn.closest(".task");
           await post("/api/tasks", { project: task.dataset.project, action: "delete", status: task.dataset.status, text: task.dataset.text });
+          return;
+        }
+
+        // task move button (→)
+        const moveBtn = el.closest(".move-btn");
+        if (moveBtn) {
+          const task = moveBtn.closest(".task");
+          const currentStatus = task.dataset.status;
+          const nextStatus = currentStatus === "todo" ? "in-progress" : "done";
+          await post("/api/tasks", { project: task.dataset.project, action: "move", status: currentStatus, to: nextStatus, text: task.dataset.text });
           return;
         }
 
