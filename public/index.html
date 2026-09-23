@@ -22,36 +22,46 @@
       --success-soft: #e4f5ed;
       --warning: #c07a12;
       --warning-soft: #fbf1de;
-      --info: #2b7bd8;
-      --info-soft: #e8f1fc;
       --radius-sm: 6px;
       --radius-md: 10px;
       --radius-lg: 14px;
       --radius-full: 999px;
       --sh-sm: 0 1px 2px rgba(18,26,44,.05);
       --sh-md: 0 2px 8px rgba(18,26,44,.05), 0 8px 24px rgba(18,26,44,.06);
+      --sidebar-w: 236px;
       --font: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", "Segoe UI", Inter, system-ui, sans-serif;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: var(--font); font-size: 14px; line-height: 1.55; background: var(--bg); color: var(--fg); min-height: 100vh; }
+    html, body { height: 100%; overflow: hidden; }
+    body { font-family: var(--font); font-size: 14px; line-height: 1.55; background: var(--bg); color: var(--fg); }
 
-    /* Top bar */
-    .topbar { position: sticky; top: 0; z-index: 100; display: flex; align-items: center; justify-content: space-between; height: 56px; padding: 0 24px; background: var(--surface); border-bottom: 1px solid var(--border); }
-    .topbar-left { display: flex; align-items: center; gap: 12px; }
-    .topbar h1 { font-size: 15px; font-weight: 600; }
-    .topbar .root-label { font-size: 12px; color: var(--faint); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
-    .topbar .fetched { font-size: 11px; color: var(--faint); }
+    /* Layout */
+    .app { display: flex; height: 100vh; }
 
-    /* Project pills */
-    .projects { padding: 16px 24px 0; display: flex; flex-wrap: wrap; gap: 8px; }
-    .proj-pill { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-full); font-size: 12px; font-weight: 500; color: var(--muted); }
-    .proj-pill .dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
-    .proj-pill .dot.active { background: var(--success); }
-    .proj-pill .dot.paused { background: var(--warning); }
-    .proj-pill .dot.done { background: var(--accent); }
-    .proj-pill .dot.archived { background: var(--faint); }
+    /* Sidebar */
+    .sidebar { width: var(--sidebar-w); flex-shrink: 0; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow-y: auto; }
+    .sidebar-header { padding: 16px 16px 12px; border-bottom: 1px solid var(--border); }
+    .sidebar-header h1 { font-size: 15px; font-weight: 600; letter-spacing: -.01em; }
+    .sidebar-header .root-label { display: block; margin-top: 2px; font-size: 10px; color: var(--faint); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .sidebar-section { padding: 12px 8px 4px; }
+    .sidebar-section-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--faint); padding: 0 8px 6px; }
+    .proj-item { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: var(--radius-sm); font-size: 12px; color: var(--muted); cursor: default; transition: background .12s ease; }
+    .proj-item:hover { background: var(--surface-hover); }
+    .proj-item.selected { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+    .proj-item .dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+    .proj-item .dot.active { background: var(--success); }
+    .proj-item .dot.paused { background: var(--warning); }
+    .proj-item .dot.done { background: var(--accent); }
+    .proj-item .dot.archived { background: var(--faint); }
+    .proj-item .name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .sidebar-footer { margin-top: auto; padding: 12px 16px; border-top: 1px solid var(--border); font-size: 10px; color: var(--faint); }
 
-    /* Kanban */
+    /* Main */
+    .main { flex: 1; overflow-y: auto; }
+    .main-header { position: sticky; top: 0; z-index: 10; display: flex; align-items: center; justify-content: space-between; padding: 14px 24px; background: var(--bg); border-bottom: 1px solid var(--border); }
+    .main-header h2 { font-size: 15px; font-weight: 600; }
+    .main-header .fetched { font-size: 11px; color: var(--faint); }
+
     .kanban { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; padding: 16px 24px; }
     @media (max-width: 860px) { .kanban { grid-template-columns: 1fr; } }
     .col { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--sh-sm); overflow: hidden; }
@@ -60,13 +70,12 @@
     .col.todo .icon { background: var(--faint); }
     .col.in-progress .icon { background: var(--warning); }
     .col.done .icon { background: var(--success); }
-    .col-header h2 { font-size: 13px; font-weight: 600; color: var(--fg); }
+    .col-header h2 { font-size: 13px; font-weight: 600; }
     .col-header .count { margin-left: auto; font-size: 11px; font-weight: 600; padding: 1px 8px; border-radius: var(--radius-full); background: var(--surface-muted); color: var(--faint); }
-    .col-body { padding: 10px; display: flex; flex-direction: column; gap: 8px; min-height: 180px; }
+    .col-body { padding: 10px; display: flex; flex-direction: column; gap: 8px; min-height: 160px; }
 
-    /* Task cards */
-    .task { padding: 10px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); font-size: 13px; line-height: 1.45; transition: border-color .15s ease, box-shadow .15s ease; }
-    .task:hover { border-color: var(--accent-border); box-shadow: var(--sh-sm); }
+    .task { padding: 10px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); font-size: 13px; line-height: 1.45; transition: border-color .15s ease; }
+    .task:hover { border-color: var(--accent-border); }
     .task .proj-tag { display: inline-block; font-size: 10px; font-weight: 600; padding: 1px 6px; border-radius: 4px; margin-bottom: 4px; }
     .task .proj-tag.t0 { background: var(--accent-soft); color: var(--accent); }
     .task .proj-tag.t1 { background: var(--success-soft); color: var(--success); }
@@ -96,84 +105,116 @@
   </style>
 </head>
 <body>
-  <div class="topbar">
-    <div class="topbar-left">
-      <h1>Agents Dashboard</h1>
-      <span class="root-label" id="root-label"></span>
+  <div class="app">
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <h1>Agents Dashboard</h1>
+        <span class="root-label" id="root-label"></span>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-section-label">Projects</div>
+        <div id="proj-list"></div>
+      </div>
+      <div class="sidebar-footer" id="fetched-at"></div>
     </div>
-    <span class="fetched" id="fetched-at"></span>
-  </div>
-  <div class="projects" id="projects"></div>
-  <div class="kanban">
-    <div class="col todo">
-      <div class="col-header"><span class="icon"></span><h2>Todo</h2><span class="count" id="count-todo"></span></div>
-      <div class="col-body" id="col-todo"></div>
+    <div class="main">
+      <div class="main-header">
+        <h2 id="main-title">All Projects</h2>
+      </div>
+      <div class="kanban">
+        <div class="col todo">
+          <div class="col-header"><span class="icon"></span><h2>Todo</h2><span class="count" id="count-todo"></span></div>
+          <div class="col-body" id="col-todo"></div>
+        </div>
+        <div class="col in-progress">
+          <div class="col-header"><span class="icon"></span><h2>In Progress</h2><span class="count" id="count-in-progress"></span></div>
+          <div class="col-body" id="col-in-progress"></div>
+        </div>
+        <div class="col done">
+          <div class="col-header"><span class="icon"></span><h2>Done</h2><span class="count" id="count-done"></span></div>
+          <div class="col-body" id="col-done"></div>
+        </div>
+      </div>
+      <div class="timeline-section">
+        <div class="timeline-title">Timeline</div>
+        <div class="timeline" id="timeline"></div>
+      </div>
     </div>
-    <div class="col in-progress">
-      <div class="col-header"><span class="icon"></span><h2>In Progress</h2><span class="count" id="count-in-progress"></span></div>
-      <div class="col-body" id="col-in-progress"></div>
-    </div>
-    <div class="col done">
-      <div class="col-header"><span class="icon"></span><h2>Done</h2><span class="count" id="count-done"></span></div>
-      <div class="col-body" id="col-done"></div>
-    </div>
-  </div>
-  <div class="timeline-section">
-    <div class="timeline-title">Timeline</div>
-    <div class="timeline" id="timeline"></div>
   </div>
   <script>
     const projectColors = {};
     let colorIdx = 0;
     const colorClasses = ["t0","t1","t2","t3","t4"];
+    let selectedProject = null;
+    let cachedData = null;
 
     async function load() {
       try {
         const res = await fetch("/api/projects");
         const { root, projects, fetchedAt } = await res.json();
+        cachedData = { root, projects, fetchedAt };
         document.getElementById("root-label").textContent = root;
         document.getElementById("fetched-at").textContent = new Date(fetchedAt).toLocaleTimeString();
-
-        document.getElementById("projects").innerHTML = projects.map(p => {
-          if (!projectColors[p.name]) projectColors[p.name] = colorClasses[colorIdx++ % colorClasses.length];
-          return `<span class="proj-pill"><span class="dot ${p.meta.stage||'archived'}"></span>${esc(p.name)}</span>`;
-        }).join("");
-
-        const all = { todo: [], "in-progress": [], done: [] };
-        for (const p of projects) {
-          for (const status of Object.keys(all)) {
-            for (const text of (p.tasks[status] || [])) {
-              all[status].push({ text, project: p.name });
-            }
-          }
-        }
-
-        for (const status of ["todo", "in-progress", "done"]) {
-          const col = document.getElementById("col-" + status);
-          const items = all[status];
-          document.getElementById("count-" + status).textContent = items.length;
-          col.innerHTML = items.length
-            ? items.map(t => `<div class="task"><span class="proj-tag ${projectColors[t.project]||'t4'}">${esc(t.project)}</span><br>${esc(t.text)}</div>`).join("")
-            : `<div class="empty">—</div>`;
-        }
-
-        const tlMap = {};
-        for (const p of projects) {
-          for (const entry of (p.changelog || [])) {
-            if (!tlMap[entry.date]) tlMap[entry.date] = [];
-            for (const item of entry.items) {
-              tlMap[entry.date].push({ text: item, project: p.name });
-            }
-          }
-        }
-        const dates = Object.keys(tlMap).sort().reverse();
-        document.getElementById("timeline").innerHTML = dates.map(date => `
-          <div class="tl-entry">
-            <div class="tl-date">${esc(date)}</div>
-            <div class="tl-items">${tlMap[date].map(t => `<div class="tl-item"><span class="proj-tag ${projectColors[t.project]||'t4'}">${esc(t.project)}</span><span>${esc(t.text)}</span></div>`).join("")}</div>
-          </div>`).join("") || `<div class="empty">No entries</div>`;
+        renderProjects(projects);
+        renderBoard(projects);
       } catch (e) { console.error(e); }
     }
+
+    function renderProjects(projects) {
+      const list = document.getElementById("proj-list");
+      list.innerHTML = projects.map(p => {
+        if (!projectColors[p.name]) projectColors[p.name] = colorClasses[colorIdx++ % colorClasses.length];
+        const sel = selectedProject === p.name ? " selected" : "";
+        return `<div class="proj-item${sel}" data-name="${esc(p.name)}"><span class="dot ${p.meta.stage||'archived'}"></span><span class="name">${esc(p.name)}</span></div>`;
+      }).join("");
+      list.querySelectorAll(".proj-item").forEach(el => {
+        el.addEventListener("click", () => {
+          selectedProject = selectedProject === el.dataset.name ? null : el.dataset.name;
+          renderProjects(cachedData.projects);
+          renderBoard(cachedData.projects);
+        });
+      });
+    }
+
+    function renderBoard(projects) {
+      const filtered = selectedProject ? projects.filter(p => p.name === selectedProject) : projects;
+      document.getElementById("main-title").textContent = selectedProject || "All Projects";
+
+      const all = { todo: [], "in-progress": [], done: [] };
+      for (const p of filtered) {
+        for (const status of Object.keys(all)) {
+          for (const text of (p.tasks[status] || [])) {
+            all[status].push({ text, project: p.name });
+          }
+        }
+      }
+
+      for (const status of ["todo", "in-progress", "done"]) {
+        const col = document.getElementById("col-" + status);
+        const items = all[status];
+        document.getElementById("count-" + status).textContent = items.length;
+        col.innerHTML = items.length
+          ? items.map(t => `<div class="task"><span class="proj-tag ${projectColors[t.project]||'t4'}">${esc(t.project)}</span><br>${esc(t.text)}</div>`).join("")
+          : `<div class="empty">—</div>`;
+      }
+
+      const tlMap = {};
+      for (const p of filtered) {
+        for (const entry of (p.changelog || [])) {
+          if (!tlMap[entry.date]) tlMap[entry.date] = [];
+          for (const item of entry.items) {
+            tlMap[entry.date].push({ text: item, project: p.name });
+          }
+        }
+      }
+      const dates = Object.keys(tlMap).sort().reverse();
+      document.getElementById("timeline").innerHTML = dates.map(date => `
+        <div class="tl-entry">
+          <div class="tl-date">${esc(date)}</div>
+          <div class="tl-items">${tlMap[date].map(t => `<div class="tl-item"><span class="proj-tag ${projectColors[t.project]||'t4'}">${esc(t.project)}</span><span>${esc(t.text)}</span></div>`).join("")}</div>
+        </div>`).join("") || `<div class="empty">No entries</div>`;
+    }
+
     function esc(s) { const d = document.createElement("div"); d.textContent = s; return d.innerHTML; }
     load();
     setInterval(load, 5000);
