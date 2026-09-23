@@ -18,3 +18,6 @@
 - 全部 9 个项目目录添加 AGENTS.md，确保 Agent 自动更新 `.dashboard/` 文件
 - 新增 `.dashboard/goals.md`（大目标 checkbox 列表）和 `status.md` 的 `description` 字段，前端展示项目描述和目标清单
 - 实现三个 Todo：①描述/目标在线编辑（POST /api/description + goals 增删）②暗色主题切换（localStorage 持久化）③时间线日视图（List/Day 切换）
+- 新增顶部正能量句子栏（点击切换，30 秒自动轮播）
+- 支持 Goal 和 task 双击编辑文本（POST /api/goal-text + /api/task-text）
+- 创建 test.mjs 测试集，24 项测试覆盖全部 API 和数据完整性
