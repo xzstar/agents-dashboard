@@ -366,7 +366,6 @@
         document.getElementById("prev-" + status).addEventListener("click", () => { if (pageState[status] > 0) { pageState[status]--; renderBoard(cachedData.projects); } });
         document.getElementById("next-" + status).addEventListener("click", () => { pageState[status]++; renderBoard(cachedData.projects); });
       }
-      let isProcessing = false;
       for (const status of ["todo", "in-progress", "done"]) {
         const col = document.getElementById("col-" + status);
         col.addEventListener("dragover", e => { e.preventDefault(); col.classList.add("drag-over"); });
@@ -398,31 +397,51 @@
       });
 
       document.addEventListener("click", async e => {
-        const goalBox = e.target.closest(".goal-box");
+        const el = e.target;
+
+        // goal checkbox toggle
+        const goalBox = el.closest(".goal-box");
         if (goalBox) {
-          if (isProcessing) return;
-          isProcessing = true;
           const newDone = goalBox.dataset.goalDone !== "true";
           const goalText = goalBox.closest(".goal-item").querySelector(".goal-text").textContent;
           const project = selectedProject || "Agents Dashboard";
-          try {
-            await fetch("/api/goals", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ project, text: goalText, done: newDone }) });
-          } finally { isProcessing = false; }
-          load();
+          await post("/api/goals", { project, text: goalText, done: newDone });
           return;
         }
-        if (isProcessing) return;
-        const delBtn = e.target.closest(".del-btn");
+
+        // goal delete
+        const goalDel = el.closest(".goal-del-btn");
+        if (goalDel) {
+          const goalText = goalDel.closest(".goal-item").querySelector(".goal-text").textContent;
+          const project = selectedProject || "Agents Dashboard";
+          await post("/api/goals", { project, action: "delete", text: goalText });
+          return;
+        }
+
+        // task delete
+        const delBtn = el.closest(".del-btn");
         if (delBtn) {
-          isProcessing = true;
           const task = delBtn.closest(".task");
-          try {
-            await fetch("/api/tasks", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ project: task.dataset.project, action: "delete", status: task.dataset.status, text: task.dataset.text }) });
-          } finally { isProcessing = false; }
-          load();
+          await post("/api/tasks", { project: task.dataset.project, action: "delete", status: task.dataset.status, text: task.dataset.text });
           return;
         }
-        const addBtn = e.target.closest(".add-btn");
+
+        // task add ok
+        const okBtn = el.closest(".task-add-ok");
+        if (okBtn) {
+          const form = okBtn.closest(".add-form");
+          const input = form?.querySelector("input");
+          const text = input?.value.trim();
+          const status = okBtn.dataset.col;
+          const project = selectedProject || "Agents Dashboard";
+          if (text && status && project) {
+            await post("/api/tasks", { project, action: "add", status, text });
+          }
+          return;
+        }
+
+        // task add: show form
+        const addBtn = el.closest(".add-btn");
         if (addBtn) {
           const form = document.createElement("div");
           form.className = "add-form";
@@ -430,33 +449,28 @@
           addBtn.replaceWith(form);
           form.querySelector("input").focus();
           form.querySelector("input").addEventListener("keydown", ev => {
-            if (ev.key === "Enter") { ev.preventDefault(); submitTaskAdd(ev.target.closest(".add-form")); }
+            if (ev.key === "Enter") { ev.preventDefault(); okBtnHandler(ev.target.closest(".add-form")); }
             if (ev.key === "Escape") { ev.target.closest(".add-form").replaceWith(addBtn); }
           });
+          return;
         }
       });
 
-      document.addEventListener("click", async e => {
-        const okBtn = e.target.closest(".task-add-ok");
-        if (okBtn) {
-          e.stopPropagation();
-          submitTaskAdd(okBtn.closest(".add-form"));
-        }
-      });
-
-      async function submitTaskAdd(form) {
-        if (!form) return;
-        const input = form.querySelector("input");
-        const text = input ? input.value.trim() : "";
-        const status = form.querySelector(".task-add-ok")?.dataset.col;
+      async function okBtnHandler(form) {
+        const input = form?.querySelector("input");
+        const text = input?.value.trim();
+        const status = form?.querySelector(".task-add-ok")?.dataset.col;
         const project = selectedProject || "Agents Dashboard";
-        if (!text || !status) return;
-        if (isProcessing) return;
-        isProcessing = true;
+        if (text && status && project) {
+          await post("/api/tasks", { project, action: "add", status, text });
+        }
+      }
+
+      async function post(url, body) {
         try {
-          await fetch("/api/tasks", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ project, action: "add", status, text }) });
-        } finally { isProcessing = false; }
-        load();
+          await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+          load();
+        } catch (err) { console.error(err); }
       }
     }
 

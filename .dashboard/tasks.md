@@ -2,8 +2,8 @@
 
 ## Todo
 
-- [ ] Add Task
-- [ ] Add Task 放在最上面
+- [ ] Goals
+- [ ] Goals能删除目标
 
 ## In Progress
 
