@@ -209,6 +209,45 @@ try {
   const todoSection = finalTasks.match(/## Todo\n+([\s\S]*?)\n+## In Progress/);
   check("Todo section format valid for top-positioned Add Task", !!todoSection);
 
+  // Test 22: Task text editing (inline edit API)
+  await post("/api/tasks", { project: PROJECT, action: "add", status: "todo", text: "__edit_orig__" });
+  await post("/api/task-text", { project: PROJECT, status: "todo", oldText: "__edit_orig__", newText: "__edit_new__" });
+  const afterTaskEdit = await get("/api/projects");
+  const afterTaskEditProj = afterTaskEdit.projects.find(p => p.name === PROJECT);
+  check("Task text edit: old text gone", !(afterTaskEditProj?.tasks?.todo || []).includes("__edit_orig__"));
+  check("Task text edit: new text present", (afterTaskEditProj?.tasks?.todo || []).includes("__edit_new__"));
+
+  // Test 23: Task text edit preserves checkbox state (done vs todo)
+  await post("/api/task-text", { project: PROJECT, status: "todo", oldText: "__edit_new__", newText: "__edit_check__" });
+  const tasksFileAfterEdit = readFile(TASKS_FILE);
+  check("Task text edit preserves [ ] checkbox", tasksFileAfterEdit.includes("- [ ] __edit_check__"));
+
+  // Test 24: Goal text editing (inline edit API)
+  await post("/api/agent-update", { project: PROJECT, action: "add_goal", text: "__goal_edit_orig__" });
+  await post("/api/goal-text", { project: PROJECT, oldText: "__goal_edit_orig__", newText: "__goal_edit_new__" });
+  const afterGoalEdit = await get("/api/projects");
+  const afterGoalEditProj = afterGoalEdit.projects.find(p => p.name === PROJECT);
+  check("Goal text edit: old text gone", !(afterGoalEditProj?.goals || []).some(g => g.text === "__goal_edit_orig__"));
+  check("Goal text edit: new text present", (afterGoalEditProj?.goals || []).some(g => g.text === "__goal_edit_new__"));
+
+  // Test 25: Goal text edit preserves done state
+  await post("/api/goals", { project: PROJECT, text: "__goal_edit_new__", done: true });
+  await post("/api/goal-text", { project: PROJECT, oldText: "__goal_edit_new__", newText: "__goal_edit_done__", done: true });
+  const goalsFileAfterGoalEdit = readFile(GOALS_FILE);
+  check("Goal text edit preserves [x] checkbox", goalsFileAfterGoalEdit.includes("- [x] __goal_edit_done__"));
+
+  // Test 26: Task text edit with non-existent old text returns error
+  const editFail = await post("/api/task-text", { project: PROJECT, status: "todo", oldText: "__nonexistent__", newText: "__whatever__" });
+  check("Task text edit with bad oldText returns error", !!editFail.error);
+
+  // Test 27: Cleanup edit test artifacts
+  await post("/api/tasks", { project: PROJECT, action: "delete", status: "todo", text: "__edit_check__" });
+  await post("/api/goals", { project: PROJECT, action: "delete", text: "__goal_edit_done__" });
+  const cleanTasks = readFile(TASKS_FILE);
+  const cleanGoals = readFile(GOALS_FILE);
+  check("No edit test artifacts in tasks.md", !cleanTasks.includes("__edit_"));
+  check("No edit test artifacts in goals.md", !cleanGoals.includes("__goal_edit_"));
+
 } catch (e) {
   failed++;
   results.push(`  ✗ Unexpected error: ${e.message}`);
