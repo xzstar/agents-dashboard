@@ -1,6 +1,9 @@
 # Changelog
 
 ## 2026-09-23
+- delete task: __agent_test_task__
+- complete task: __agent_test_task__
+- add task: __agent_test_task__
 
 - 创建 `.dashboard/` 公共文档框架
 - 确定格式约定：Markdown 正文 + YAML frontmatter
@@ -21,3 +24,6 @@
 - 新增顶部正能量句子栏（点击切换，30 秒自动轮播）
 - 支持 Goal 和 task 双击编辑文本（POST /api/goal-text + /api/task-text）
 - 创建 test.mjs 测试集，24 项测试覆盖全部 API 和数据完整性
+- 实现 POST /api/agent-update 统一端点，Agent 可直接调用 API 更新任务/目标/状态
+- 更新全部 9 个项目 AGENTS.md，添加 API 快捷更新说明
+- 测试集扩展到 29 项，覆盖 agent-update 端点

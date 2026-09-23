@@ -151,6 +151,28 @@ try {
   check("No test artifacts remain in tasks.md", !finalTasks.includes("__test_"));
   check("No test artifacts remain in goals.md", !finalGoals.includes("__test_"));
 
+  // Test 16: Agent unified API - add + complete task
+  await post("/api/agent-update", { project: PROJECT, action: "add_task", status: "todo", text: "__agent_test_task__" });
+  const agentAdd = await get("/api/projects");
+  const agentAddProj = agentAdd.projects.find(p => p.name === PROJECT);
+  check("agent-update add_task works", (agentAddProj?.tasks?.todo || []).includes("__agent_test_task__"));
+  await post("/api/agent-update", { project: PROJECT, action: "complete_task", text: "__agent_test_task__" });
+  const agentComplete = await get("/api/projects");
+  const agentCompleteProj = agentComplete.projects.find(p => p.name === PROJECT);
+  check("agent-update complete_task moves to done", (agentCompleteProj?.tasks?.done || []).includes("__agent_test_task__"));
+  check("agent-update writes changelog", readFile(path.join(PROJECT_DIR, ".dashboard", "changelog.md")).includes("complete task"));
+
+  // Test 17: Agent unified API - status update
+  await post("/api/agent-update", { project: PROJECT, action: "", summary: "__agent_test_summary__", stage: "active" });
+  const agentStatus = await get("/api/projects");
+  const agentStatusProj = agentStatus.projects.find(p => p.name === PROJECT);
+  check("agent-update summary works", agentStatusProj?.meta?.summary === "__agent_test_summary__");
+
+  // Test 18: Cleanup agent test artifacts
+  await post("/api/agent-update", { project: PROJECT, action: "delete_task", status: "done", text: "__agent_test_task__" });
+  const agentCleanup = readFile(TASKS_FILE);
+  check("No agent test artifacts remain", !agentCleanup.includes("__agent_test_"));
+
 } catch (e) {
   failed++;
   results.push(`  ✗ Unexpected error: ${e.message}`);

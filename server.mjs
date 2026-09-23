@@ -376,6 +376,138 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  if (url.pathname === "/api/agent-update" && req.method === "POST") {
+    let body = "";
+    req.on("data", chunk => body += chunk);
+    req.on("end", () => {
+      try {
+        const { project, action, status, text, to, oldText, newText, description, summary, stage } = JSON.parse(body);
+        const projectDir = findProjectDir(project, ROOT);
+        if (!projectDir) { res.writeHead(404, { "Content-Type": "application/json" }); res.end(JSON.stringify({ error: "Project not found" })); return; }
+        const dashDir = path.join(projectDir, ".dashboard");
+        const now = new Date().toISOString();
+        const responses = {};
+
+        // Task operations
+        if (action === "add_task" && text && status) {
+          const tasksPath = path.join(dashDir, "tasks.md");
+          const sections = parseTasks(fs.readFileSync(tasksPath, "utf-8"));
+          const norm = s => s.trim();
+          if (!sections[status].some(t => norm(t) === norm(text))) sections[status].push(text.trim());
+          writeTasks(tasksPath, sections);
+          responses.task = "added";
+        }
+        if (action === "complete_task" && text) {
+          const tasksPath = path.join(dashDir, "tasks.md");
+          const sections = parseTasks(fs.readFileSync(tasksPath, "utf-8"));
+          for (const s of ["todo", "in-progress"]) {
+            const idx = sections[s].findIndex(t => t.trim() === text.trim());
+            if (idx !== -1) { sections[s].splice(idx, 1); sections["done"].push(text.trim()); break; }
+          }
+          writeTasks(tasksPath, sections);
+          responses.task = "completed";
+        }
+        if (action === "move_task" && text && status && to) {
+          const tasksPath = path.join(dashDir, "tasks.md");
+          const sections = parseTasks(fs.readFileSync(tasksPath, "utf-8"));
+          const idx = sections[status]?.findIndex(t => t.trim() === text.trim());
+          if (idx !== -1 && idx !== undefined) { sections[status].splice(idx, 1); sections[to].push(text.trim()); }
+          writeTasks(tasksPath, sections);
+          responses.task = "moved";
+        }
+        if (action === "delete_task" && text && status) {
+          const tasksPath = path.join(dashDir, "tasks.md");
+          const sections = parseTasks(fs.readFileSync(tasksPath, "utf-8"));
+          sections[status] = sections[status].filter(t => t.trim() !== text.trim());
+          writeTasks(tasksPath, sections);
+          responses.task = "deleted";
+        }
+        if (action === "edit_task" && oldText && newText && status) {
+          const tasksPath = path.join(dashDir, "tasks.md");
+          const sections = parseTasks(fs.readFileSync(tasksPath, "utf-8"));
+          const idx = sections[status]?.findIndex(t => t.trim() === oldText.trim());
+          if (idx !== -1 && idx !== undefined) sections[status][idx] = newText.trim();
+          writeTasks(tasksPath, sections);
+          responses.task = "edited";
+        }
+
+        // Goal operations
+        if (action === "add_goal" && text) {
+          const goalsPath = path.join(dashDir, "goals.md");
+          let content = fs.existsSync(goalsPath) ? fs.readFileSync(goalsPath, "utf-8") : "# Goals\n\n";
+          content = content.replace(/\n*$/, "\n") + `- [ ] ${text.trim()}\n`;
+          fs.writeFileSync(goalsPath, content);
+          responses.goal = "added";
+        }
+        if (action === "complete_goal" && text) {
+          const goalsPath = path.join(dashDir, "goals.md");
+          let content = fs.readFileSync(goalsPath, "utf-8");
+          content = content.replace(new RegExp(`^(\\s*-\\s\\[)\\s(\\]\\s${text.trim().replace(/[.*+?^${}()|[\\]\\\\]/g, "\\$&")})$`, "m"), "$1x$2");
+          fs.writeFileSync(goalsPath, content);
+          responses.goal = "completed";
+        }
+        if (action === "delete_goal" && text) {
+          const goalsPath = path.join(dashDir, "goals.md");
+          let content = fs.readFileSync(goalsPath, "utf-8");
+          content = content.split("\n").filter(l => {
+            const m = l.match(/^\s*-\s\[( |x|X)\]\s(.*)/);
+            return !(m && m[2].trim() === text.trim());
+          }).join("\n");
+          fs.writeFileSync(goalsPath, content);
+          responses.goal = "deleted";
+        }
+
+        // Status/description update
+        if (description || summary || stage) {
+          const statusPath = path.join(dashDir, "status.md");
+          let content = fs.readFileSync(statusPath, "utf-8");
+          if (description) {
+            const safe = description.replace(/\n/g, " ").trim();
+            content = content.includes("description:") ? content.replace(/^description:.*$/m, `description: ${safe}`) : content.replace(/^(summary:.*$)/m, `$1\ndescription: ${safe}`);
+          }
+          if (summary) {
+            const safe = summary.replace(/\n/g, " ").trim();
+            content = content.replace(/^summary:.*$/m, `summary: ${safe}`);
+          }
+          if (stage && ["active","paused","done","archived"].includes(stage)) {
+            content = content.replace(/^stage:.*$/m, `stage: ${stage}`);
+          }
+          content = content.replace(/^updated:.*$/m, `updated: ${now}`);
+          fs.writeFileSync(statusPath, content);
+          responses.status = "updated";
+        }
+
+        // Changelog entry
+        if (text && (action === "add_task" || action === "complete_task" || action === "delete_task" || action === "add_goal" || action === "complete_goal" || action === "delete_goal")) {
+          const changelogPath = path.join(dashDir, "changelog.md");
+          let content = fs.existsSync(changelogPath) ? fs.readFileSync(changelogPath, "utf-8") : "# Changelog\n\n";
+          const today = now.slice(0, 10);
+          const dateHeader = `## ${today}`;
+          if (content.includes(dateHeader)) {
+            content = content.replace(dateHeader, `${dateHeader}\n- ${action.replace(/_/g, " ")}: ${text.trim()}`);
+          } else {
+            content = content.replace(/\n*$/, "\n") + `${dateHeader}\n\n- ${action.replace(/_/g, " ")}: ${text.trim()}\n`;
+          }
+          fs.writeFileSync(changelogPath, content);
+          responses.changelog = "updated";
+        }
+
+        if (Object.keys(responses).length === 0) {
+          res.writeHead(400, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ error: "No valid action or missing required fields", supported: ["add_task", "complete_task", "move_task", "delete_task", "edit_task", "add_goal", "complete_goal", "delete_goal", "description/summary/stage"] }));
+          return;
+        }
+
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: true, ...responses }));
+      } catch (e) {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: e.message }));
+      }
+    });
+    return;
+  }
+
   // static files
   const filePath = path.join(__dirname, "public", url.pathname === "/" ? "index.html" : url.pathname);
   if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
