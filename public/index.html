@@ -333,7 +333,7 @@
         const pageItems = items.slice(start, start + PAGE_SIZE);
         document.getElementById("count-" + status).textContent = items.length;
           col.innerHTML = pageItems.length
-          ? pageItems.map(t => `<div class="task" draggable="true" data-text="${escAttr(t.text)}" data-project="${escAttr(t.project)}" data-status="${status}"><span class="proj-tag ${projectColors[t.project]||'t4'}">${esc(t.project)}</span><br>${esc(t.text)}<button class="move-btn" title="Move to next">→</button><button class="del-btn" title="Delete">×</button></div>`).join("")
+          ? pageItems.map(t => `<div class="task" draggable="true" data-text="${escAttr(t.text)}" data-project="${escAttr(t.project)}" data-status="${status}"><span class="proj-tag ${projectColors[t.project]||'t4'}">${esc(t.project)}</span><br><span class="task-text">${esc(t.text)}</span><button class="move-btn" title="Move to next">→</button><button class="del-btn" title="Delete">×</button></div>`).join("")
           : "";
           col.insertAdjacentHTML("afterbegin", `<button class="add-btn" data-col="${status}">+ Add Task</button>`);
           const footer = document.getElementById("footer-" + status);
@@ -563,27 +563,26 @@
 
       const taskEl = e.target.closest(".task");
       if (taskEl && !taskEl.querySelector(".inline-edit")) {
-        const br = taskEl.querySelector("br");
-        const textNode = taskEl.childNodes[taskEl.childNodes.length - 1];
-        const current = textNode?.textContent?.trim() || "";
+        const textSpan = taskEl.querySelector(".task-text");
+        if (!textSpan) return;
+        const current = textSpan.textContent.trim();
         if (!current) return;
         const ta = document.createElement("textarea");
         ta.className = "inline-edit";
         ta.value = current;
         ta.rows = 1;
-        textNode.remove();
-        br?.remove();
-        taskEl.appendChild(ta);
+        textSpan.textContent = "";
+        textSpan.appendChild(ta);
         ta.focus();
         ta.select();
         const save = async () => {
           const val = ta.value.trim();
           if (val && val !== current) {
             await fetch("/api/task-text", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ project: taskEl.dataset.project, status: taskEl.dataset.status, oldText: current, newText: val }) });
-            load();
           } else {
-            load();
+            textSpan.textContent = current;
           }
+          load();
         };
         ta.addEventListener("blur", save);
         ta.addEventListener("keydown", ev => {

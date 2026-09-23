@@ -2,6 +2,7 @@
 
 ## Todo
 
+- [ ] "Add Task" 按钮始终在列顶部
 
 ## In Progress
 
@@ -31,6 +32,6 @@
 - [x] 支持 Agent 通过 API 自动更新（POST /api/agent-update）
 - [x] 支持 Agent 通过 API 自动更新 ×
 - [x] "Add Task" always on top
-- [x] drag to InProgress or Done fail, fix it
 - [x] fix remove goals item action not fresh
+- [x] drag to InProgress or Done fail, fix it
 
