@@ -426,24 +426,38 @@
         if (addBtn) {
           const form = document.createElement("div");
           form.className = "add-form";
-          form.innerHTML = `<input type="text" placeholder="Task description…"><button>OK</button>`;
+          form.innerHTML = `<input type="text" placeholder="Task description…"><button class="task-add-ok" data-col="${addBtn.dataset.col}">OK</button>`;
           addBtn.replaceWith(form);
           form.querySelector("input").focus();
-          const submit = async () => {
-            const text = form.querySelector("input").value.trim();
-            if (!text) { form.replaceWith(addBtn); return; }
-            if (isProcessing) return;
-            isProcessing = true;
-            const project = selectedProject || "Agents Dashboard";
-            try {
-              await fetch("/api/tasks", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ project, action: "add", status: addBtn.dataset.col, text }) });
-            } finally { isProcessing = false; }
-            load();
-          };
-          form.querySelector("button").addEventListener("click", submit);
-          form.querySelector("input").addEventListener("keydown", ev => { if (ev.key === "Enter") submit(); if (ev.key === "Escape") form.replaceWith(addBtn); });
+          form.querySelector("input").addEventListener("keydown", ev => {
+            if (ev.key === "Enter") { ev.preventDefault(); submitTaskAdd(ev.target.closest(".add-form")); }
+            if (ev.key === "Escape") { ev.target.closest(".add-form").replaceWith(addBtn); }
+          });
         }
       });
+
+      document.addEventListener("click", async e => {
+        const okBtn = e.target.closest(".task-add-ok");
+        if (okBtn) {
+          e.stopPropagation();
+          submitTaskAdd(okBtn.closest(".add-form"));
+        }
+      });
+
+      async function submitTaskAdd(form) {
+        if (!form) return;
+        const input = form.querySelector("input");
+        const text = input ? input.value.trim() : "";
+        const status = form.querySelector(".task-add-ok")?.dataset.col;
+        const project = selectedProject || "Agents Dashboard";
+        if (!text || !status) return;
+        if (isProcessing) return;
+        isProcessing = true;
+        try {
+          await fetch("/api/tasks", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ project, action: "add", status, text }) });
+        } finally { isProcessing = false; }
+        load();
+      }
     }
 
     load();
