@@ -435,7 +435,9 @@
           const status = okBtn.dataset.col;
           const project = selectedProject || "Agents Dashboard";
           if (text && status && project) {
+            const addBtnHTML = `<button class="add-btn" data-col="${status}">+ Add Task</button>`;
             await post("/api/tasks", { project, action: "add", status, text });
+            form.outerHTML = addBtnHTML;
           }
           return;
         }
