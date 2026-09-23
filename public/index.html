@@ -231,6 +231,7 @@
     function escAttr(s) { return s.replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
 
     function setupEventDelegation() {
+      let isProcessing = false;
       for (const status of ["todo", "in-progress", "done"]) {
         const col = document.getElementById("col-" + status);
         col.addEventListener("dragover", e => { e.preventDefault(); col.classList.add("drag-over"); });
@@ -238,12 +239,15 @@
         col.addEventListener("drop", async e => {
           e.preventDefault();
           col.classList.remove("drag-over");
+          if (isProcessing) return;
           try {
             const data = JSON.parse(e.dataTransfer.getData("text/plain"));
             if (data.status === status) return;
+            isProcessing = true;
             await fetch("/api/tasks", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ project: data.project, action: "move", status: data.status, to: status, text: data.text }) });
-            load();
           } catch (err) { console.error(err); }
+          finally { isProcessing = false; }
+          load();
         });
       }
 
@@ -259,10 +263,14 @@
       });
 
       document.addEventListener("click", async e => {
+        if (isProcessing) return;
         const delBtn = e.target.closest(".del-btn");
         if (delBtn) {
+          isProcessing = true;
           const task = delBtn.closest(".task");
-          await fetch("/api/tasks", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ project: task.dataset.project, action: "delete", status: task.dataset.status, text: task.dataset.text }) });
+          try {
+            await fetch("/api/tasks", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ project: task.dataset.project, action: "delete", status: task.dataset.status, text: task.dataset.text }) });
+          } finally { isProcessing = false; }
           load();
           return;
         }
@@ -276,8 +284,12 @@
           const submit = async () => {
             const text = form.querySelector("input").value.trim();
             if (!text) { form.replaceWith(addBtn); return; }
+            if (isProcessing) return;
+            isProcessing = true;
             const project = selectedProject || "Agents Dashboard";
-            await fetch("/api/tasks", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ project, action: "add", status: addBtn.dataset.col, text }) });
+            try {
+              await fetch("/api/tasks", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ project, action: "add", status: addBtn.dataset.col, text }) });
+            } finally { isProcessing = false; }
             load();
           };
           form.querySelector("button").addEventListener("click", submit);

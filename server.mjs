@@ -209,12 +209,20 @@ const server = http.createServer((req, res) => {
         if (!projectDir) { res.writeHead(404, { "Content-Type": "application/json" }); res.end(JSON.stringify({ error: "Project not found" })); return; }
         const tasksPath = path.join(projectDir, ".dashboard", "tasks.md");
         const sections = parseTasks(fs.readFileSync(tasksPath, "utf-8"));
+        const normalize = s => s.replace(/<[^>]*>/g, "").trim();
         if (action === "add") {
+          if (sections[status].some(t => normalize(t) === normalize(text))) {
+            res.writeHead(200, { "Content-Type": "application/json" }); res.end(JSON.stringify({ ok: true, deduped: true })); return;
+          }
           sections[status].push(text);
         } else if (action === "delete") {
           sections[status] = sections[status].filter(t => t !== text);
         } else if (action === "move") {
           sections[status] = sections[status].filter(t => t !== text);
+          if (sections[to].some(t => normalize(t) === normalize(text))) {
+            writeTasks(tasksPath, sections);
+            res.writeHead(200, { "Content-Type": "application/json" }); res.end(JSON.stringify({ ok: true, deduped: true })); return;
+          }
           sections[to].push(text);
         } else {
           res.writeHead(400, { "Content-Type": "application/json" }); res.end(JSON.stringify({ error: "Unknown action" })); return;
