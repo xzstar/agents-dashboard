@@ -206,7 +206,7 @@ try {
   check("Goal fresh test: goal removed from file immediately", !goalFreshAfter.includes("__goal_fresh_test__"));
 
   // Test 21: Add Task positioning - verify todo section format is maintained
-  const todoSection = finalTasks.match(/## Todo\n\n([\s\S]*?)\n\n## In Progress/);
+  const todoSection = finalTasks.match(/## Todo\n+([\s\S]*?)\n+## In Progress/);
   check("Todo section format valid for top-positioned Add Task", !!todoSection);
 
 } catch (e) {

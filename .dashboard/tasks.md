@@ -2,6 +2,7 @@
 
 ## Todo
 
+
 ## In Progress
 
 
@@ -32,3 +33,4 @@
 - [x] "Add Task" always on top
 - [x] drag to InProgress or Done fail, fix it
 - [x] fix remove goals item action not fresh
+
