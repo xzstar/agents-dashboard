@@ -438,6 +438,8 @@
             const addBtnHTML = `<button class="add-btn" data-col="${status}">+ Add Task</button>`;
             await post("/api/tasks", { project, action: "add", status, text });
             form.outerHTML = addBtnHTML;
+          } else {
+            form.replaceWith(`<button class="add-btn" data-col="${okBtn.dataset.col}">+ Add Task</button>`);
           }
           return;
         }
@@ -451,22 +453,24 @@
           addBtn.replaceWith(form);
           form.querySelector("input").focus();
           form.querySelector("input").addEventListener("keydown", ev => {
-            if (ev.key === "Enter") { ev.preventDefault(); okBtnHandler(ev.target.closest(".add-form")); }
+            if (ev.key === "Enter") {
+              ev.preventDefault();
+              const input = ev.target;
+              const text = input.value.trim();
+              const status = addBtn.dataset.col;
+              const project = selectedProject || "Agents Dashboard";
+              if (text && status && project) {
+                input.closest(".add-form").outerHTML = `<button class="add-btn" data-col="${status}">+ Add Task</button>`;
+                post("/api/tasks", { project, action: "add", status, text });
+              } else {
+                input.closest(".add-form").replaceWith(addBtn);
+              }
+            }
             if (ev.key === "Escape") { ev.target.closest(".add-form").replaceWith(addBtn); }
           });
           return;
         }
       });
-
-      async function okBtnHandler(form) {
-        const input = form?.querySelector("input");
-        const text = input?.value.trim();
-        const status = form?.querySelector(".task-add-ok")?.dataset.col;
-        const project = selectedProject || "Agents Dashboard";
-        if (text && status && project) {
-          await post("/api/tasks", { project, action: "add", status, text });
-        }
-      }
 
       async function post(url, body) {
         try {
@@ -525,9 +529,9 @@
     document.getElementById("goal-add-save").addEventListener("click", async () => {
       const text = document.getElementById("goal-add-input").value.trim();
       if (!text || !selectedProject) return;
-      await fetch("/api/goals", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ project: selectedProject, action: "add", text }) });
       document.getElementById("goal-add-container").style.display = "none";
       document.getElementById("goal-add-input").value = "";
+      await fetch("/api/goals", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ project: selectedProject, action: "add", text }) });
       load();
     });
     document.getElementById("goal-add-input").addEventListener("keydown", e => { if (e.key === "Enter") document.getElementById("goal-add-save").click(); if (e.key === "Escape") document.getElementById("goal-add-container").style.display = "none"; });
