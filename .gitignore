@@ -1,0 +1,20 @@
+# Actual project data (use template/.dashboard/ as starting point)
+/.dashboard/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node
+node_modules/
+package-lock.json
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Temporary
+*.log
+*.tmp
