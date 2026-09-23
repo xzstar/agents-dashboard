@@ -114,6 +114,13 @@
     .main-header .refresh-btn { border: 1px solid var(--border); background: var(--surface); color: var(--muted); font-size: 12px; padding: 4px 14px; border-radius: var(--radius-sm); cursor: pointer; transition: border-color .12s ease, color .12s ease; }
     .main-header .refresh-btn:hover { border-color: var(--accent-border); color: var(--accent); }
 
+    /* Motivational quote */
+    .quote-bar { padding: 8px 24px; background: var(--accent-soft); border-bottom: 1px solid var(--accent-border); font-size: 12px; color: var(--accent); font-style: italic; text-align: center; cursor: pointer; user-select: none; transition: opacity .3s ease; }
+    .quote-bar:hover { opacity: .8; }
+
+    /* Inline edit */
+    .inline-edit { width: 100%; padding: 2px 6px; border: 1px solid var(--accent-border); border-radius: 4px; font-size: inherit; font-family: var(--font); color: var(--fg); background: var(--surface-muted); outline: none; resize: none; }
+
     .kanban { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; padding: 16px 24px; }
     @media (max-width: 860px) { .kanban { grid-template-columns: 1fr; } }
     .col { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--sh-sm); overflow: hidden; }
@@ -195,6 +202,7 @@
         <h2 id="main-title">All Projects</h2>
         <button class="refresh-btn" id="refresh-btn">↻ 刷新</button>
       </div>
+      <div class="quote-bar" id="quote-bar" title="点击换一句"></div>
       <div class="info-section" id="info-section" style="display:none">
         <div class="info-card">
           <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
@@ -483,6 +491,96 @@
     load();
     setupEventDelegation();
     document.getElementById("refresh-btn").addEventListener("click", () => load());
+
+    // ── Motivational quotes ──
+    const quotes = [
+      "每一个小小的进步，都是通往目标的阶梯。",
+      "行动是治愈恐惧的良药，犹豫拖延将不断滋养恐惧。",
+      "不要等待机会，而要创造机会。",
+      "成功的秘诀在于坚持自己的目标和信念。",
+      "种一棵树最好的时间是十年前，其次是现在。",
+      "你今天的努力，是幸运的伏笔。",
+      "把每一天当作新的起点，把每一次尝试当作成长。",
+      "路虽远，行则将至；事虽难，做则必成。",
+      "不要因为走得太远而忘记为什么出发。",
+      "所有的美好，都需要一点耐心和一点勇气。",
+    ];
+    let quoteIdx = Math.floor(Math.random() * quotes.length);
+    const quoteBar = document.getElementById("quote-bar");
+    quoteBar.textContent = `「 ${quotes[quoteIdx]} 」`;
+    quoteBar.addEventListener("click", () => {
+      quoteIdx = (quoteIdx + 1) % quotes.length;
+      quoteBar.textContent = `「 ${quotes[quoteIdx]} 」`;
+    });
+    setInterval(() => {
+      quoteIdx = (quoteIdx + 1) % quotes.length;
+      quoteBar.style.opacity = "0";
+      setTimeout(() => { quoteBar.textContent = `「 ${quotes[quoteIdx]} 」`; quoteBar.style.opacity = "1"; }, 300);
+    }, 30000);
+
+    // ── Inline edit for tasks and goals ──
+    document.addEventListener("dblclick", async e => {
+      const goalText = e.target.closest(".goal-text");
+      if (goalText && !goalText.querySelector("textarea")) {
+        const current = goalText.textContent;
+        const ta = document.createElement("textarea");
+        ta.className = "inline-edit";
+        ta.value = current;
+        ta.rows = 1;
+        goalText.textContent = "";
+        goalText.appendChild(ta);
+        ta.focus();
+        ta.select();
+        const save = async () => {
+          const val = ta.value.trim();
+          if (val && val !== current && selectedProject) {
+            const goalItem = goalText.closest(".goal-item");
+            const done = goalItem.classList.contains("done");
+            await fetch("/api/goal-text", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ project: selectedProject, oldText: current, newText: val, done }) });
+            load();
+          } else {
+            goalText.textContent = current;
+          }
+        };
+        ta.addEventListener("blur", save);
+        ta.addEventListener("keydown", ev => {
+          if (ev.key === "Enter") { ev.preventDefault(); ta.blur(); }
+          if (ev.key === "Escape") { ta.value = current; ta.blur(); }
+        });
+        return;
+      }
+
+      const taskEl = e.target.closest(".task");
+      if (taskEl && !taskEl.querySelector(".inline-edit")) {
+        const br = taskEl.querySelector("br");
+        const textNode = taskEl.childNodes[taskEl.childNodes.length - 1];
+        const current = textNode?.textContent?.trim() || "";
+        if (!current) return;
+        const ta = document.createElement("textarea");
+        ta.className = "inline-edit";
+        ta.value = current;
+        ta.rows = 1;
+        textNode.remove();
+        br?.remove();
+        taskEl.appendChild(ta);
+        ta.focus();
+        ta.select();
+        const save = async () => {
+          const val = ta.value.trim();
+          if (val && val !== current) {
+            await fetch("/api/task-text", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ project: taskEl.dataset.project, status: taskEl.dataset.status, oldText: current, newText: val }) });
+            load();
+          } else {
+            load();
+          }
+        };
+        ta.addEventListener("blur", save);
+        ta.addEventListener("keydown", ev => {
+          if (ev.key === "Enter") { ev.preventDefault(); ta.blur(); }
+          if (ev.key === "Escape") { ta.value = current; ta.blur(); }
+        });
+      }
+    });
 
     // ── Theme toggle ──
     const savedTheme = localStorage.getItem("dashboard-theme") || "light";

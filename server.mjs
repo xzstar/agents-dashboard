@@ -321,6 +321,61 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  if (url.pathname === "/api/task-text" && req.method === "POST") {
+    let body = "";
+    req.on("data", chunk => body += chunk);
+    req.on("end", () => {
+      try {
+        const { project, status, oldText, newText } = JSON.parse(body);
+        const projectDir = findProjectDir(project, ROOT);
+        if (!projectDir) { res.writeHead(404, { "Content-Type": "application/json" }); res.end(JSON.stringify({ error: "Project not found" })); return; }
+        const tasksPath = path.join(projectDir, ".dashboard", "tasks.md");
+        const sections = parseTasks(fs.readFileSync(tasksPath, "utf-8"));
+        const idx = sections[status]?.findIndex(t => t === oldText);
+        if (idx === -1 || idx === undefined) { res.writeHead(404, { "Content-Type": "application/json" }); res.end(JSON.stringify({ error: "Task not found" })); return; }
+        sections[status][idx] = newText.trim();
+        writeTasks(tasksPath, sections);
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: true }));
+      } catch (e) {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: e.message }));
+      }
+    });
+    return;
+  }
+
+  if (url.pathname === "/api/goal-text" && req.method === "POST") {
+    let body = "";
+    req.on("data", chunk => body += chunk);
+    req.on("end", () => {
+      try {
+        const { project, oldText, newText, done } = JSON.parse(body);
+        const projectDir = findProjectDir(project, ROOT);
+        if (!projectDir) { res.writeHead(404, { "Content-Type": "application/json" }); res.end(JSON.stringify({ error: "Project not found" })); return; }
+        const goalsPath = path.join(projectDir, ".dashboard", "goals.md");
+        if (!fs.existsSync(goalsPath)) { res.writeHead(404, { "Content-Type": "application/json" }); res.end(JSON.stringify({ error: "goals.md not found" })); return; }
+        let content = fs.readFileSync(goalsPath, "utf-8");
+        const lines = content.split("\n");
+        for (let i = 0; i < lines.length; i++) {
+          const m = lines[i].match(/^(\s*-\s\[)( |x|X)(\]\s)(.*)/);
+          if (m && m[4].trim() === oldText.trim()) {
+            const mark = done !== undefined ? (done ? "x" : " ") : m[2];
+            lines[i] = `${m[1]}${mark}${m[3]}${newText.trim()}`;
+            break;
+          }
+        }
+        fs.writeFileSync(goalsPath, lines.join("\n"));
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: true }));
+      } catch (e) {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: e.message }));
+      }
+    });
+    return;
+  }
+
   // static files
   const filePath = path.join(__dirname, "public", url.pathname === "/" ? "index.html" : url.pathname);
   if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
