@@ -164,6 +164,20 @@ function parseGoals(content) {
   return goals;
 }
 
+function upsertFrontmatter(content, key, value) {
+  const lines = content.split(/\r?\n/);
+  let closingIndex = -1;
+  for (let index = 1; index < lines.length; index++) {
+    if (lines[index].trim() === "---") { closingIndex = index; break; }
+  }
+  const fieldIndex = lines.findIndex((line, index) => index < closingIndex && line.startsWith(`${key}:`));
+  const field = `${key}: ${value}`;
+  if (fieldIndex !== -1) lines[fieldIndex] = field;
+  else if (closingIndex !== -1) lines.splice(closingIndex, 0, field);
+  else lines.unshift(field);
+  return lines.join("\n");
+}
+
 // ---------- Project scanner ----------
 function scanProjects(root, depth = 0) {
   if (depth > 3) return [];
@@ -180,14 +194,38 @@ function scanProjects(root, depth = 0) {
       const changelogRaw = fs.existsSync(changelogPath) ? fs.readFileSync(changelogPath, "utf-8") : "";
       const goalsPath = path.join(dashDir, "goals.md");
       const goalsRaw = fs.existsSync(goalsPath) ? fs.readFileSync(goalsPath, "utf-8") : "";
+      const parsedTasks = parseTasks(tasksRaw);
+      const changelog = parseChangelog(changelogRaw);
+      const startedAtByTask = new Map();
+      for (const entry of changelog) {
+        const startedAt = Date.parse(`${entry.date}T00:00:00.000Z`);
+        if (!Number.isFinite(startedAt)) continue;
+        for (const item of entry.items) {
+          const match = item.match(/^start task: (.+)$/);
+          if (match && (!startedAtByTask.has(match[1]) || startedAt > startedAtByTask.get(match[1]))) {
+            startedAtByTask.set(match[1], startedAt);
+          }
+        }
+      }
+      const STALE_MS = 7 * 24 * 60 * 60 * 1000;
+      const now = Date.now();
+      const projectStale = !Number.isFinite(Date.parse(meta.updated)) || now - Date.parse(meta.updated) > STALE_MS;
+      const staleTasks = parsedTasks["in-progress"].map(text => {
+        const startedAt = startedAtByTask.get(text) || null;
+        return { text, startedAt, stale: !!startedAt && now - startedAt > STALE_MS };
+      });
+      const heartbeatAt = Date.parse(meta.lastAgentHeartbeat || "");
+      const heartbeatAge = Number.isFinite(heartbeatAt) ? now - heartbeatAt : null;
       results.push({
         path: path.relative(ROOT, root) || ".",
         name: meta.project || path.basename(root),
         meta,
         body: mdToHtml(body),
-        tasks: parseTasks(tasksRaw),
+        tasks: parsedTasks,
         goals: parseGoals(goalsRaw),
-        changelog: parseChangelog(changelogRaw),
+        changelog,
+        health: { stale: projectStale || staleTasks.some(task => task.stale), staleTasks },
+        heartbeat: { lastAt: meta.lastAgentHeartbeat || null, ageMs: heartbeatAge, fresh: heartbeatAge !== null && heartbeatAge >= 0 && heartbeatAge <= STALE_MS },
       });
     }
   }
@@ -501,7 +539,7 @@ const server = http.createServer((req, res) => {
         }
 
         // Changelog entry
-        if (text && (action === "add_task" || action === "complete_task" || action === "delete_task" || action === "add_goal" || action === "complete_goal" || action === "delete_goal")) {
+        if (text && (action === "start_task" || action === "add_task" || action === "complete_task" || action === "delete_task" || action === "add_goal" || action === "complete_goal" || action === "delete_goal")) {
           const changelogPath = path.join(dashDir, "changelog.md");
           let content = fs.existsSync(changelogPath) ? fs.readFileSync(changelogPath, "utf-8") : "# Changelog\n\n";
           const today = now.slice(0, 10);
@@ -528,6 +566,33 @@ const server = http.createServer((req, res) => {
 
         res.writeHead(200, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ ok: true, ...responses }));
+      } catch (e) {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: e.message }));
+      }
+    });
+    return;
+  }
+
+  if (url.pathname === "/api/agent-heartbeat" && req.method === "POST") {
+    let body = "";
+    req.on("data", chunk => body += chunk);
+    req.on("end", () => {
+      try {
+        const { project, agent } = JSON.parse(body);
+        const projectDir = findProjectDir(project, ROOT);
+        if (!projectDir) { res.writeHead(404, { "Content-Type": "application/json" }); res.end(JSON.stringify({ error: "Project not found" })); return; }
+        if (!agent) { res.writeHead(400, { "Content-Type": "application/json" }); res.end(JSON.stringify({ error: "agent is required" })); return; }
+        const statusPath = path.join(projectDir, ".dashboard", "status.md");
+        let content = fs.readFileSync(statusPath, "utf-8");
+        content = upsertFrontmatter(content, "agent", String(agent));
+        content = upsertFrontmatter(content, "lastAgentHeartbeat", new Date().toISOString());
+        fs.writeFileSync(statusPath, content);
+        for (const client of sseClients) {
+          client.write(`data: ${JSON.stringify({ type: "agent-heartbeat", action: "heartbeat_refresh", project, agent })}\n\n`);
+        }
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: true, heartbeat: "recorded" }));
       } catch (e) {
         res.writeHead(400, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ error: e.message }));

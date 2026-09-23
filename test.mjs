@@ -10,6 +10,7 @@ const PROJECT_DIR = path.dirname(new URL(import.meta.url).pathname);
 const TASKS_FILE = path.join(PROJECT_DIR, ".dashboard", "tasks.md");
 const GOALS_FILE = path.join(PROJECT_DIR, ".dashboard", "goals.md");
 const STATUS_FILE = path.join(PROJECT_DIR, ".dashboard", "status.md");
+const SERVER_FILE = path.join(PROJECT_DIR, "server.mjs");
 
 let passed = 0, failed = 0;
 const results = [];
@@ -25,7 +26,9 @@ function post(url, body) {
     const req = http.request(`${BASE}${url}`, { method: "POST", headers: { "Content-Type": "application/json", "Content-Length": Buffer.byteLength(data) } }, res => {
       let buf = "";
       res.on("data", c => buf += c);
-      res.on("end", () => resolve(JSON.parse(buf)));
+      res.on("end", () => {
+        try { resolve(JSON.parse(buf)); } catch { resolve(buf); }
+      });
     });
     req.on("error", reject);
     req.write(data);
@@ -270,6 +273,199 @@ try {
   await post("/api/agent-update", { project: PROJECT, action: "delete_task", status: "in-progress", text: "__start_task_test__" });
   const cleanStart = readFile(TASKS_FILE);
   check("No start_task artifacts remain", !cleanStart.includes("__start_task_test__"));
+
+  // Test 32: Project selection survives refresh through a shareable URL
+const html = readFile(path.join(PROJECT_DIR, "public", "index.html"));
+const serverSource = readFile(SERVER_FILE);
+  check("Selected project is restored from URL", html.includes('const requestedProject = new URLSearchParams(window.location.search).get("project")'));
+  check("Missing selected project falls back to monitoring view", html.includes("projects.some(project => project.name === selectedProject)"));
+  check("Project selection updates the URL without a page reload", html.includes("window.history.replaceState"));
+
+  // Test 33: Monitoring overview is separate from project entries
+  check("Sidebar has a dedicated monitoring overview", html.includes('id="overview-item"'));
+  check("Overview is labeled 监控看板", html.includes("监控看板"));
+  check("Projects are no longer mixed with All Projects entries", !html.includes(">All Projects</span>"));
+
+  // Test 34: Agent workflow requires starting a task before implementation
+  const agentRules = readFile(path.join(PROJECT_DIR, "AGENTS.md"));
+  check("Agent workflow mandates start_task before implementation", agentRules.includes("第一件事**是调用 `start_task`"));
+  check("Agent workflow documents start_task as supported", agentRules.includes("`start_task` / `add_task`"));
+  check("Agent workflow requires tests before implementation", agentRules.includes("必须先新增或修改对应测试用例"));
+
+  // Test 35: Monitoring KPI cards expose active, in-progress, done, and stale totals
+  check("KPI section exists on monitoring board", html.includes('id="kpi-grid"'));
+  check("KPI renderer computes monitoring metrics", html.includes("function renderKpis(projects)"));
+  check("KPI renderer tracks active projects", html.includes('label: "活跃项目"'));
+  check("KPI renderer tracks in-progress tasks", html.includes('label: "进行中任务"'));
+  check("KPI renderer tracks completed tasks", html.includes('label: "完成任务"'));
+  check("KPI renderer tracks stale projects", html.includes('label: "停滞项目"'));
+  check("KPI stale threshold is 7 days", html.includes("const STALE_DAYS = 7"));
+  check("KPI renderer is invoked before board rendering", html.includes("renderKpis(projects);") && html.indexOf("renderKpis(projects);") < html.indexOf("renderBoard(projects);"));
+
+  // Test 36: Monitoring includes per-project health cards
+  check("Project health grid exists", html.includes('id="health-grid"'));
+  check("Project health cards are rendered", html.includes("function renderHealthCards(projects)"));
+  check("Health cards show project progress", html.includes("const completed = project.tasks.done.length"));
+  check("Health cards show total task count", html.includes("const taskTotal = completed + project.tasks.todo.length + project.tasks[\"in-progress\"].length"));
+  check("Health cards show owner or current agent", html.includes("project.meta.agent || project.meta.owner || \"未记录\""));
+  check("Health cards show recent update time", html.includes("formatUpdatedAt(project)"));
+  check("Health cards mark stale projects", html.includes('isProjectStale(project) ? "停滞" : "正常"'));
+  check("Health cards are clickable and sync project selection", html.includes("healthGrid.addEventListener(\"click\", event =>"));
+
+  // Test 37: API tracks started tasks and exposes stale-task detection
+  await post("/api/tasks", { project: PROJECT, action: "add", status: "todo", text: "__stale_task_test__" });
+  await post("/api/agent-update", { project: PROJECT, action: "start_task", text: "__stale_task_test__" });
+  const changelogBeforeStaleTest = readFile(path.join(PROJECT_DIR, ".dashboard", "changelog.md"));
+  const staleApi = await get("/api/projects");
+  const staleProject = staleApi.projects.find(project => project.name === PROJECT);
+  check("API returns project health", !!staleProject?.health);
+  check("API returns stale project flag", typeof staleProject?.health?.stale === "boolean");
+  check("API returns stale task list", Array.isArray(staleProject?.health?.staleTasks));
+  const startedStaleTask = staleProject?.health?.staleTasks?.find(task => task.text === "__stale_task_test__");
+  check("start_task records a task start date", !!startedStaleTask?.startedAt);
+  check("Newly started task is not stale", startedStaleTask?.stale === false);
+
+  // Test 38: In Progress tasks older than 7 days are marked stale
+  const staleDate = new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  const changelogPath = path.join(PROJECT_DIR, ".dashboard", "changelog.md");
+  fs.writeFileSync(changelogPath, changelogBeforeStaleTest.replace(`## ${new Date().toISOString().slice(0, 10)}`, `## ${staleDate}`));
+  const oldStaleApi = await get("/api/projects");
+  const oldStaleProject = oldStaleApi.projects.find(project => project.name === PROJECT);
+  const oldStaleTask = oldStaleProject?.health?.staleTasks?.find(task => task.text === "__stale_task_test__");
+  check("Old In Progress task is marked stale", oldStaleTask?.stale === true);
+  check("Stale task makes project health stale", oldStaleProject?.health?.stale === true);
+
+  // Test 39: Cleanup stale detection artifacts
+  await post("/api/agent-update", { project: PROJECT, action: "delete_task", status: "in-progress", text: "__stale_task_test__" });
+  fs.writeFileSync(changelogPath, changelogBeforeStaleTest);
+  const cleanStale = readFile(path.join(PROJECT_DIR, ".dashboard", "tasks.md"));
+  check("No stale test artifacts remain", !cleanStale.includes("__stale_task_test__"));
+  check("KPI uses API stale health", html.includes("scopedProjects.filter(project => isProjectStale(project))"));
+  check("Health cards use API stale health", html.includes("isProjectStale(project) ? \"停滞\" : \"正常\""));
+
+  // Test 40: Activity feed aggregates recent project changes
+  check("Activity feed section exists", html.includes('id="activity-list"'));
+  check("Activity feed is rendered from changelog entries", html.includes("function renderActivityFeed(projects)"));
+  check("Activity feed aggregates all projects", html.includes("getFilteredProjects(projects).flatMap(project =>"));
+  check("Activity feed shows newest changes first", html.includes(".sort((a, b) => b.date.localeCompare(a.date)"));
+  check("Activity feed limits displayed history", html.includes(".slice(0, 20)"));
+  check("Activity feed labels each source project", html.includes('class="proj-tag ${projectColors[activity.project]'));
+  check("Activity feed updates on load and selection", html.includes("renderActivityFeed(projects);"));
+
+  // Test 41: Trend charts summarize the last 14 days of project activity
+  check("Trend grid exists", html.includes('id="trend-grid"'));
+  check("Trend renderer exists", html.includes("function renderTrends(projects)"));
+  check("Trend window is 14 days", html.includes("const TREND_DAYS = 14"));
+  check("Trend renderer tracks completed tasks", html.includes('label: "完成任务"'));
+  check("Trend renderer tracks added tasks", html.includes('label: "新增任务"'));
+  check("Trend renderer tracks in-progress changes", html.includes('label: "In Progress"'));
+  check("Trend renderer tracks agent activity", html.includes('label: "Agent 活跃"'));
+  check("Trend charts render daily bars", html.includes('class="trend-bars"'));
+  check("Trend charts update on load", html.includes("renderTrends(projects);"));
+
+  // Test 42: Goal progress overview aggregates checkbox completion
+  check("Goal overview section exists", html.includes('id="goal-overview-grid"'));
+  check("Goal overview renderer exists", html.includes("function renderGoalOverview(projects)"));
+  check("Goal overview computes completed goals", html.includes("const doneGoals = project.goals.filter(goal => goal.done).length"));
+  check("Goal overview computes total goals", html.includes("const totalGoals = project.goals.length"));
+  check("Goal overview calculates completion percentage", html.includes("Math.round(doneGoals / totalGoals * 100)"));
+  check("Goal overview handles projects without goals", html.includes("totalGoals ? Math.round(doneGoals / totalGoals * 100) : 0"));
+  check("Goal overview updates on load and selection", html.includes("renderGoalOverview(projects);"));
+
+  // Test 43: Search and filters cover project, task, status, and recency dimensions
+  check("Search input exists", html.includes('id="filter-input"'));
+  check("Search covers project names and task content", html.includes('const searchTargets = [project.name, project.meta.description || "", project.meta.summary || "",'));
+  check("Status filter checkboxes exist", html.includes('data-filter-status="todo"'));
+  check("Status filter includes In Progress", html.includes('data-filter-status="in-progress"'));
+  check("Status filter includes Done", html.includes('data-filter-status="done"'));
+  check("Updated-time filter exists", html.includes('id="updated-filter"'));
+  check("Search filter state is centralized", html.includes("const filters = { query: \"\", statuses: new Set([\"todo\", \"in-progress\", \"done\"]), updatedWithin: \"all\" }"));
+  check("Filtered projects helper is used by board", html.includes("const filtered = getFilteredProjects(projects);"));
+  check("Search and filters refresh views without reloading data", html.includes("function refreshFilteredViews()"));
+
+  // Test 44: Project detail drawer shows a focused board and timeline
+  check("Project drawer overlay exists", html.includes('id="project-drawer-overlay"'));
+  check("Project drawer body exists", html.includes('id="project-drawer-body"'));
+  check("Project drawer renderer exists", html.includes("function openProjectDrawer(projectName)"));
+  check("Project drawer closes with button", html.includes('id="project-drawer-close"'));
+  check("Project drawer closes on overlay click", html.includes("projectDrawerOverlay.addEventListener(\"click\", event =>"));
+  check("Project drawer shows focused task board", html.includes("drawerProject.tasks"));
+  check("Project drawer shows changelog timeline", html.includes("drawerProject.changelog"));
+  check("Health cards open the project drawer", html.includes("openProjectDrawer(card.dataset.name)"));
+  check("Project drawer can switch to the main board", html.includes('id="project-drawer-open"'));
+
+  // Test 45: Notification rules surface stale tasks, stale projects, and heartbeat gaps
+  check("Notification list exists", html.includes('id="notification-list"'));
+  check("Notification renderer exists", html.includes("function renderNotifications(projects)"));
+  check("Notifications detect stale tasks", html.includes('project.health.staleTasks.filter(task => task.stale)'));
+  check("Notifications detect stale projects", html.includes('type: "stale-project"'));
+  check("Notifications detect missing heartbeats", html.includes('type: "missing-heartbeat"'));
+  check("Notifications use warning styling", html.includes('class="notification-item warning"'));
+  check("Notification count is displayed", html.includes('id="notification-count"'));
+  check("Notifications update on load and filtering", html.includes("renderNotifications(projects);"));
+
+  // Test 46: Reports export the filtered snapshot as Markdown or HTML
+  check("Markdown report button exists", html.includes('id="export-md"'));
+  check("HTML report button exists", html.includes('id="export-html"'));
+  check("Markdown report builder exists", html.includes("function buildReportMarkdown(projects)"));
+  check("HTML report builder exists", html.includes("function buildReportHtml(projects)"));
+  check("Reports use the current filtered snapshot", html.includes("const reportProjects = getFilteredProjects(cachedData.projects)"));
+  check("Report download uses browser Blob", html.includes("new Blob([content], { type: contentType })"));
+  check("Reports include task sections", html.includes("### Tasks"));
+  check("Reports include goal progress", html.includes("### Goals"));
+  check("Reports include recent timeline", html.includes("### Timeline"));
+
+  // Test 47: Agents can report heartbeats and monitoring shows freshness
+  const statusBeforeHeartbeat = readFile(STATUS_FILE);
+  const heartbeatResult = await post("/api/agent-heartbeat", { project: PROJECT, agent: "__test_agent__" });
+  check("Agent heartbeat API accepts heartbeat", heartbeatResult.ok === true);
+  const heartbeatApi = await get("/api/projects");
+  const heartbeatProject = heartbeatApi.projects.find(project => project.name === PROJECT);
+  check("Heartbeat API records agent name", heartbeatProject?.meta?.agent === "__test_agent__");
+  check("Heartbeat API records last heartbeat", !!heartbeatProject?.heartbeat?.lastAt);
+  check("Heartbeat API reports age", typeof heartbeatProject?.heartbeat?.ageMs === "number");
+  check("Fresh heartbeat is reported fresh", heartbeatProject?.heartbeat?.fresh === true);
+  const statusAfterHeartbeat = readFile(STATUS_FILE);
+  check("Heartbeat persists in status frontmatter", statusAfterHeartbeat.includes("lastAgentHeartbeat:"));
+
+  // Test 48: Stale heartbeat is reported but can be restored
+  const staleHeartbeatAt = new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toISOString();
+  fs.writeFileSync(STATUS_FILE, statusAfterHeartbeat.replace(/^lastAgentHeartbeat:.*$/m, `lastAgentHeartbeat: ${staleHeartbeatAt}`));
+  const staleHeartbeatApi = await get("/api/projects");
+  const staleHeartbeatProject = staleHeartbeatApi.projects.find(project => project.name === PROJECT);
+  check("Stale heartbeat is reported stale", staleHeartbeatProject?.heartbeat?.fresh === false);
+  check("Monitoring displays heartbeat freshness", html.includes("function formatHeartbeat(project)"));
+  check("Health cards show last heartbeat", html.includes("心跳：${formatHeartbeat(project)}"));
+
+  // Test 49: Cleanup heartbeat test artifacts
+  fs.writeFileSync(STATUS_FILE, statusBeforeHeartbeat);
+  const cleanedHeartbeatApi = await get("/api/projects");
+  const cleanedHeartbeatProject = cleanedHeartbeatApi.projects.find(project => project.name === PROJECT);
+  check("No heartbeat test agent remains", cleanedHeartbeatProject?.meta?.agent !== "__test_agent__");
+  check("Heartbeat API is documented for agents", agentRules.includes("POST http://localhost:3456/api/agent-heartbeat"));
+  check("Heartbeat payload is documented", agentRules.includes('{"project": "项目名", "agent": "Agent 名称"}'));
+
+  // Test 50: Activity feed hides internal test task entries
+  check("Activity feed has a test-entry filter", html.includes("function isTestActivity(text)"));
+  check("Test-entry filter matches stale task artifacts", html.includes('text.includes("stale_task_test")'));
+  check("Test-entry filter matches double-underscore artifacts", html.includes('text.includes("__")'));
+  check("Activity feed filters test entries before pagination", html.includes(".filter(activity => !isTestActivity(activity.text)).slice(0, 20)"));
+
+  // Test 51: In Progress tasks display a blinking running indicator
+  check("In Progress running dot class exists", html.includes('class="running-dot"'));
+  check("Running dot is only added to In Progress tasks", html.includes('${status === "in-progress" ? `<span class="running-dot"></span>` : ""}'));
+  check("Running dot uses a red pulse animation", html.includes("@keyframes running-pulse"));
+  check("Running dot is visible above task content", html.includes("z-index: 1"));
+
+  // Test 52: Heartbeat refreshes open dashboards through SSE
+  check("Heartbeat broadcast is implemented by server", serverSource.includes("heartbeat_refresh"));
+  check("Dashboard refreshes on heartbeat broadcast", html.includes('data.type === "agent-heartbeat"'));
+
+  // Test 53: Timeline and drawer timeline hide internal test entries
+  check("Timeline filters test entries", html.includes("for (const item of entry.items.filter(item => !isTestActivity(item)))"));
+  check("Timeline list uses the filtered test-entry rule", html.includes('tlMap[date].map(t => `<div class="tl-item"><span class="proj-tag ${projectColors[t.project]'));
+  check("Timeline day view uses the filtered test-entry rule", html.includes('tlMap[date].map(t => `<div class="tl-item"><span class="proj-tag ${projectColors[t.project]'));
+  check("Project drawer timeline filters test entries", html.includes("entry.items.filter(text => !isTestActivity(text))"));
 
 } catch (e) {
   failed++;

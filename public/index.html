@@ -124,6 +124,114 @@
     }
     .quote-bar:hover { opacity: .8; }
 
+    /* Monitoring KPIs */
+    .kpi-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; padding: 16px 24px 0; }
+    .kpi-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--sh-sm); padding: 15px 17px; }
+    .kpi-card .kpi-label { display: block; font-size: 11px; font-weight: 600; color: var(--muted); }
+    .kpi-card .kpi-value { display: block; margin-top: 4px; font-size: 25px; font-weight: 700; line-height: 1.2; color: var(--fg); }
+    .kpi-card .kpi-detail { display: block; margin-top: 3px; font-size: 10px; color: var(--faint); }
+    .kpi-card.warning { border-color: var(--warning); background: var(--warning-soft); }
+    .kpi-card.warning .kpi-value { color: var(--warning); }
+    @media (max-width: 1000px) { .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (max-width: 520px) { .kpi-grid { grid-template-columns: 1fr; } }
+
+    /* Project health cards */
+    .health-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; padding: 14px 24px 0; }
+    .health-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--sh-sm); padding: 15px 17px; cursor: pointer; transition: border-color .12s ease, transform .12s ease; }
+    .health-card:hover { border-color: var(--accent-border); transform: translateY(-1px); }
+    .health-card.stale { border-color: var(--warning); }
+    .health-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .health-top h3 { font-size: 14px; font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .health-state { flex-shrink: 0; font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: var(--radius-full); }
+    .health-state.ok { background: var(--success-soft); color: var(--success); }
+    .health-state.stale { background: var(--warning-soft); color: var(--warning); }
+    .health-meta { margin-top: 5px; font-size: 11px; color: var(--muted); }
+    .health-progress { display: flex; align-items: center; gap: 9px; margin-top: 13px; }
+    .progress-track { flex: 1; height: 6px; border-radius: var(--radius-full); background: var(--surface-muted); overflow: hidden; }
+    .progress-fill { height: 100%; border-radius: var(--radius-full); background: var(--accent); }
+    .progress-value { min-width: 34px; text-align: right; font-size: 11px; font-weight: 650; color: var(--muted); }
+    .health-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 11px; }
+    .health-stat { background: var(--surface-muted); border-radius: var(--radius-sm); padding: 7px 8px; }
+    .health-stat b { display: block; font-size: 15px; line-height: 1.2; }
+    .health-stat span { display: block; margin-top: 2px; font-size: 10px; color: var(--faint); }
+
+    /* Activity feed */
+    .activity-section { margin: 18px 24px 0; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--sh-sm); overflow: hidden; }
+    .activity-header { display: flex; align-items: center; justify-content: space-between; padding: 13px 17px; border-bottom: 1px solid var(--border); }
+    .activity-title { font-size: 13px; font-weight: 650; }
+    .activity-count { font-size: 11px; color: var(--faint); }
+    .activity-list { max-height: 300px; overflow-y: auto; }
+    .activity-item { display: flex; align-items: baseline; gap: 10px; padding: 9px 17px; border-bottom: 1px solid var(--border); font-size: 12px; }
+    .activity-item:last-child { border-bottom: 0; }
+    .activity-date { flex-shrink: 0; width: 76px; color: var(--faint); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10px; }
+    .activity-text { color: var(--fg); line-height: 1.45; }
+
+    /* Trend charts */
+    .trend-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin: 18px 24px 0; }
+    .trend-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--sh-sm); padding: 14px 16px; }
+    .trend-top { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+    .trend-top h3 { font-size: 12px; font-weight: 650; color: var(--muted); }
+    .trend-total { font-size: 21px; font-weight: 700; }
+    .trend-window { margin-top: 2px; font-size: 10px; color: var(--faint); }
+    .trend-bars { display: flex; align-items: flex-end; gap: 4px; height: 56px; margin-top: 13px; }
+    .trend-bar { flex: 1; min-height: 3px; border-radius: 3px 3px 0 0; background: var(--accent); opacity: .78; }
+    .trend-bar.empty { background: var(--border); opacity: .55; }
+
+    /* Goal overview */
+    .goal-overview-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; margin: 18px 24px 0; }
+    .goal-overview-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--sh-sm); padding: 14px 16px; }
+    .goal-overview-top { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+    .goal-overview-top h3 { font-size: 14px; font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .goal-overview-value { flex-shrink: 0; font-size: 17px; font-weight: 700; color: var(--accent); }
+    .goal-overview-meta { margin-top: 4px; font-size: 11px; color: var(--muted); }
+
+    /* Search and filters */
+    .filter-bar { display: grid; grid-template-columns: minmax(180px, 1fr) auto auto auto; gap: 10px; align-items: center; margin: 14px 24px 0; padding: 10px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--sh-sm); }
+    .filter-bar input[type="search"] { width: 100%; padding: 7px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface-muted); color: var(--fg); font-family: var(--font); font-size: 12px; outline: none; }
+    .filter-bar input[type="search"]:focus { border-color: var(--accent-border); }
+    .status-filters { display: flex; align-items: center; gap: 9px; }
+    .status-filters label { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; color: var(--muted); cursor: pointer; white-space: nowrap; }
+    .filter-bar select, .filter-reset { padding: 6px 8px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); color: var(--muted); font-family: var(--font); font-size: 11px; cursor: pointer; }
+    .filter-reset:hover { color: var(--accent); border-color: var(--accent-border); }
+    @media (max-width: 920px) { .filter-bar { grid-template-columns: 1fr; } .status-filters { flex-wrap: wrap; } }
+
+    /* Project drawer */
+    .drawer-overlay { position: fixed; inset: 0; z-index: 60; background: rgba(15,22,38,.42); display: flex; justify-content: flex-end; }
+    .drawer-overlay[hidden] { display: none; }
+    .drawer-panel { width: min(640px, 92vw); height: 100vh; background: var(--bg); border-left: 1px solid var(--border); box-shadow: -18px 0 48px rgba(15,22,38,.18); display: flex; flex-direction: column; }
+    .drawer-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 15px 20px; border-bottom: 1px solid var(--border); background: var(--surface); }
+    .drawer-header h2 { font-size: 16px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .drawer-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+    .drawer-close, .drawer-open-board { border: 1px solid var(--border); background: var(--surface); color: var(--muted); font-size: 12px; padding: 5px 10px; border-radius: var(--radius-sm); cursor: pointer; }
+    .drawer-close:hover, .drawer-open-board:hover { color: var(--accent); border-color: var(--accent-border); }
+    .drawer-body { flex: 1; overflow-y: auto; padding: 18px 20px 32px; }
+    .drawer-section { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--sh-sm); padding: 15px 17px; margin-bottom: 14px; }
+    .drawer-section h3 { font-size: 12px; font-weight: 650; color: var(--muted); margin-bottom: 9px; }
+    .drawer-columns { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; }
+    .drawer-column { background: var(--surface-muted); border-radius: var(--radius-sm); padding: 9px; }
+    .drawer-column h4 { font-size: 10px; text-transform: uppercase; letter-spacing: .05em; color: var(--faint); margin-bottom: 7px; }
+    .drawer-task { font-size: 12px; padding: 5px 6px; border-radius: 4px; background: var(--surface); margin-bottom: 5px; line-height: 1.35; }
+    .drawer-timeline { display: flex; flex-direction: column; gap: 8px; }
+    .drawer-timeline-item { display: flex; gap: 9px; font-size: 12px; line-height: 1.45; }
+    .drawer-timeline-date { flex-shrink: 0; width: 74px; color: var(--faint); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10px; }
+
+    /* Notifications */
+    .notification-section { margin: 18px 24px 0; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--sh-sm); overflow: hidden; }
+    .notification-header { display: flex; align-items: center; justify-content: space-between; padding: 13px 17px; border-bottom: 1px solid var(--border); }
+    .notification-title { font-size: 13px; font-weight: 650; }
+    .notification-count { font-size: 11px; color: var(--faint); }
+    .notification-list { max-height: 260px; overflow-y: auto; }
+    .notification-item { display: flex; align-items: baseline; gap: 10px; padding: 9px 17px; border-bottom: 1px solid var(--border); font-size: 12px; }
+    .notification-item:last-child { border-bottom: 0; }
+    .notification-item.warning { background: var(--warning-soft); }
+    .notification-type { flex-shrink: 0; min-width: 76px; font-size: 10px; font-weight: 700; color: var(--warning); }
+    .notification-message { line-height: 1.45; }
+
+    /* Report export */
+    .export-actions { display: flex; gap: 8px; }
+    .export-btn { border: 1px solid var(--border); background: var(--surface); color: var(--muted); font-size: 12px; padding: 4px 12px; border-radius: var(--radius-sm); cursor: pointer; }
+    .export-btn:hover { color: var(--accent); border-color: var(--accent-border); }
+
     /* Inline edit */
     .inline-edit { width: 100%; padding: 2px 6px; border: 1px solid var(--accent-border); border-radius: 4px; font-size: inherit; font-family: var(--font); color: var(--fg); background: var(--surface-muted); outline: none; resize: none; }
 
@@ -152,6 +260,11 @@
     .task .move-btn { position: absolute; top: 6px; right: 24px; border: none; background: transparent; color: var(--faint); font-size: 14px; cursor: pointer; opacity: 0; transition: opacity .12s ease, color .12s ease; padding: 0 2px; }
     .task:hover .move-btn { opacity: 1; }
     .task .move-btn:hover { color: var(--accent); }
+    .task .running-dot { display: inline-block; width: 7px; height: 7px; margin-right: 5px; vertical-align: middle; border-radius: 50%; background: #e5484d; z-index: 1; animation: running-pulse 1.2s ease-in-out infinite; }
+    @keyframes running-pulse {
+      0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(229, 72, 77, .45); }
+      50% { opacity: .45; box-shadow: 0 0 0 5px rgba(229, 72, 77, 0); }
+    }
     .col-body.drag-over { outline: 2px dashed var(--accent-border); outline-offset: -4px; border-radius: var(--radius-md); background: var(--accent-soft); }
     .add-btn { display: flex; align-items: center; justify-content: center; gap: 4px; width: 100%; padding: 8px; border: 1px dashed var(--border); border-radius: var(--radius-md); background: transparent; color: var(--faint); font-size: 12px; cursor: pointer; transition: border-color .12s ease, color .12s ease; }
     .add-btn:hover { border-color: var(--accent-border); color: var(--accent); }
@@ -198,6 +311,10 @@
         <span class="root-label" id="root-label"></span>
       </div>
       <div class="sidebar-section">
+        <div class="sidebar-section-label">Monitoring</div>
+        <div class="proj-item" id="overview-item" data-name=""><span class="dot" style="background:var(--accent)"></span><span class="name">监控看板</span></div>
+      </div>
+      <div class="sidebar-section">
         <div class="sidebar-section-label">Projects</div>
         <div id="proj-list"></div>
       </div>
@@ -209,9 +326,45 @@
     <div class="main">
       <div class="main-header">
         <h2 id="main-title">All Projects</h2>
-        <button class="refresh-btn" id="refresh-btn">↻ 刷新</button>
+        <div class="export-actions">
+          <button class="export-btn" id="export-md">导出 Markdown</button>
+          <button class="export-btn" id="export-html">导出 HTML</button>
+          <button class="refresh-btn" id="refresh-btn">↻ 刷新</button>
+        </div>
       </div>
       <div class="quote-bar" id="quote-bar" title="点击换一句"></div>
+      <div class="filter-bar">
+        <input type="search" id="filter-input" placeholder="搜索项目、任务、目标或变更…" autocomplete="off">
+        <div class="status-filters">
+          <label><input type="checkbox" data-filter-status="todo" checked> Todo</label>
+          <label><input type="checkbox" data-filter-status="in-progress" checked> In Progress</label>
+          <label><input type="checkbox" data-filter-status="done" checked> Done</label>
+        </div>
+        <select id="updated-filter">
+          <option value="all">全部更新时间</option>
+          <option value="7">7 天内更新</option>
+          <option value="30">30 天内更新</option>
+        </select>
+        <button class="filter-reset" id="filter-reset">重置</button>
+      </div>
+      <div class="kpi-grid" id="kpi-grid"></div>
+      <section class="notification-section">
+        <div class="notification-header">
+          <div class="notification-title">Notifications</div>
+          <div class="notification-count" id="notification-count"></div>
+        </div>
+        <div class="notification-list" id="notification-list"></div>
+      </section>
+      <div class="health-grid" id="health-grid"></div>
+      <div class="trend-grid" id="trend-grid"></div>
+      <div class="goal-overview-grid" id="goal-overview-grid"></div>
+      <section class="activity-section">
+        <div class="activity-header">
+          <div class="activity-title">Activity</div>
+          <div class="activity-count" id="activity-count"></div>
+        </div>
+        <div class="activity-list" id="activity-list"></div>
+      </section>
       <div class="info-section" id="info-section" style="display:none">
         <div class="info-card">
           <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
@@ -262,6 +415,18 @@
       </div>
     </div>
   </div>
+  <div class="drawer-overlay" id="project-drawer-overlay" hidden>
+    <aside class="drawer-panel" role="dialog" aria-modal="true">
+      <div class="drawer-header">
+        <h2 id="project-drawer-title">Project</h2>
+        <div class="drawer-actions">
+          <button class="drawer-open-board" id="project-drawer-open">打开看板</button>
+          <button class="drawer-close" id="project-drawer-close" aria-label="Close">×</button>
+        </div>
+      </div>
+      <div class="drawer-body" id="project-drawer-body"></div>
+    </aside>
+  </div>
   <script>
     const projectColors = {};
     const PAGE_SIZE = 10;
@@ -270,21 +435,283 @@
     const colorClasses = ["t0","t1","t2","t3","t4"];
     let selectedProject = null;
     let cachedData = null;
+    let drawerProjectName = null;
+    const requestedProject = new URLSearchParams(window.location.search).get("project");
+    if (requestedProject) selectedProject = requestedProject;
+    const STALE_DAYS = 7;
+    const TREND_DAYS = 14;
+    const filters = { query: "", statuses: new Set(["todo", "in-progress", "done"]), updatedWithin: "all" };
 
     async function load() {
       try {
         const res = await fetch("/api/projects");
         const { root, projects, fetchedAt } = await res.json();
         cachedData = { root, projects, fetchedAt };
+        if (selectedProject && !projects.some(project => project.name === selectedProject)) {
+          selectedProject = null;
+        }
         document.getElementById("root-label").textContent = root;
         document.getElementById("fetched-at").textContent = new Date(fetchedAt).toLocaleTimeString();
         renderProjects(projects);
+        renderKpis(projects);
+        renderNotifications(projects);
+        renderHealthCards(projects);
+        renderTrends(projects);
+        renderGoalOverview(projects);
+        renderActivityFeed(projects);
         renderBoard(projects);
       } catch (e) { console.error(e); }
     }
 
+    function isStale(project) {
+      const updatedAt = Date.parse(project.meta.updated || "");
+      if (!Number.isFinite(updatedAt)) return true;
+      return Date.now() - updatedAt > STALE_DAYS * 24 * 60 * 60 * 1000;
+    }
+
+    function isProjectStale(project) {
+      return isStale(project) || !!project.health?.stale;
+    }
+
+    function renderKpis(projects) {
+      const scopedProjects = getFilteredProjects(projects);
+      const metrics = [
+        { label: "活跃项目", value: scopedProjects.filter(project => (project.meta.stage || "active") === "active").length, detail: `共 ${scopedProjects.length} 个项目`, tone: "" },
+        { label: "进行中任务", value: scopedProjects.reduce((total, project) => total + project.tasks["in-progress"].length, 0), detail: "跨所有项目", tone: "" },
+        { label: "完成任务", value: scopedProjects.reduce((total, project) => total + project.tasks.done.length, 0), detail: "累计完成", tone: "" },
+        { label: "停滞项目", value: scopedProjects.filter(project => isProjectStale(project)).length, detail: `超过 ${STALE_DAYS} 天未更新或有停滞任务`, tone: "warning" }
+      ];
+      document.getElementById("kpi-grid").innerHTML = metrics.map(metric => `
+        <div class="kpi-card${metric.tone ? ` ${metric.tone}` : ""}">
+          <span class="kpi-label">${metric.label}</span>
+          <span class="kpi-value">${metric.value}</span>
+          <span class="kpi-detail">${metric.detail}</span>
+        </div>
+      `).join("");
+    }
+
+    function renderNotifications(projects) {
+      const scopedProjects = getFilteredProjects(projects);
+      const notifications = [];
+      for (const project of scopedProjects) {
+        for (const task of project.health.staleTasks.filter(task => task.stale)) {
+          notifications.push({ type: "stale-task", project: project.name, message: `任务「${task.text}」已长期停留在 In Progress` });
+        }
+        if (isStale(project)) {
+          notifications.push({ type: "stale-project", project: project.name, message: `项目已超过 ${STALE_DAYS} 天未更新` });
+        }
+        const heartbeatAt = Date.parse(project.meta.lastAgentHeartbeat || project.heartbeat?.lastAt || "");
+        if (!Number.isFinite(heartbeatAt) || Date.now() - heartbeatAt > STALE_DAYS * 24 * 60 * 60 * 1000) {
+          notifications.push({ type: "missing-heartbeat", project: project.name, message: "Agent 心跳缺失或已过期" });
+        }
+      }
+      document.getElementById("notification-count").textContent = `${notifications.length} 条提醒`;
+      document.getElementById("notification-list").innerHTML = notifications.map(notification => `
+        <div class="notification-item warning">
+          <span class="notification-type">${notification.type}</span>
+          <span class="proj-tag ${projectColors[notification.project] || "t4"}">${esc(notification.project)}</span>
+          <span class="notification-message">${esc(notification.message)}</span>
+        </div>
+      `).join("") || `<div class="empty">No warnings</div>`;
+    }
+
+    function buildReportMarkdown(projects) {
+      const lines = [`# Agents Dashboard Report`, ``, `- Generated: ${new Date().toLocaleString()}`, `- Projects: ${projects.length}`, ``];
+      for (const project of projects) {
+        lines.push(`## ${project.name}`, ``, `- Updated: ${project.meta.updated || "unknown"}`, `- Agent: ${project.meta.agent || project.meta.owner || "unknown"}`, `- Description: ${project.meta.description || project.meta.summary || "none"}`, ``);
+        lines.push(`### Tasks`, ``);
+        for (const [status, items] of Object.entries(project.tasks)) {
+          lines.push(`#### ${status}`, ``);
+          for (const text of items) lines.push(`- ${text}`);
+          if (!items.length) lines.push(`- None`);
+          lines.push(``);
+        }
+        lines.push(`### Goals`, ``);
+        for (const goal of project.goals) lines.push(`- [${goal.done ? "x" : " "}] ${goal.text}`);
+        if (!project.goals.length) lines.push(`- None`);
+        lines.push(``, `### Timeline`, ``);
+        for (const entry of (project.changelog || []).slice(0, 5)) for (const text of entry.items) lines.push(`- ${entry.date}: ${text}`);
+        lines.push(``);
+      }
+      return lines.join("\n");
+    }
+
+    function buildReportHtml(projects) {
+      const sections = projects.map(project => {
+        const tasks = Object.entries(project.tasks).map(([status, items]) => `<h4>${status}</h4><ul>${items.map(text => `<li>${esc(text)}</li>`).join("") || "<li>None</li>"}</ul>`).join("");
+        const goals = `<ul>${project.goals.map(goal => `<li>${goal.done ? "✓" : "○"} ${esc(goal.text)}</li>`).join("") || "<li>None</li>"}</ul>`;
+        const timeline = `<ul>${(project.changelog || []).flatMap(entry => entry.items.map(text => `<li>${esc(entry.date)}: ${esc(text)}</li>`)).join("") || "<li>None</li>"}</ul>`;
+        return `<section><h2>${esc(project.name)}</h2><p>${esc(project.meta.description || project.meta.summary || "No description")}</p><h3>Tasks</h3>${tasks}<h3>Goals</h3>${goals}<h3>Timeline</h3>${timeline}</section>`;
+      }).join("");
+      return `<!doctype html><meta charset="utf-8"><title>Agents Dashboard Report</title><h1>Agents Dashboard Report</h1><p>Generated ${new Date().toLocaleString()}</p>${sections}`;
+    }
+
+    function downloadReport(format) {
+      const reportProjects = getFilteredProjects(cachedData.projects);
+      const isHtml = format === "html";
+      const content = isHtml ? buildReportHtml(reportProjects) : buildReportMarkdown(reportProjects);
+      const contentType = isHtml ? "text/html;charset=utf-8" : "text/markdown;charset=utf-8";
+      const blob = new Blob([content], { type: contentType });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `agents-dashboard-report-${new Date().toISOString().slice(0, 10)}.${format}`;
+      link.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function formatUpdatedAt(project) {
+      const timestamp = Date.parse(project.meta.updated || "");
+      if (!Number.isFinite(timestamp)) return "未知";
+      const diffDays = Math.floor((Date.now() - timestamp) / (24 * 60 * 60 * 1000));
+      if (diffDays <= 0) return "今天";
+      if (diffDays === 1) return "昨天";
+      if (diffDays < 30) return `${diffDays} 天前`;
+      return new Date(timestamp).toLocaleDateString();
+    }
+
+    function formatHeartbeat(project) {
+      const timestamp = Date.parse(project.meta.lastAgentHeartbeat || project.heartbeat?.lastAt || "");
+      if (!Number.isFinite(timestamp)) return "未知";
+      const ageMinutes = Math.max(0, Math.floor((Date.now() - timestamp) / 60000));
+      if (ageMinutes < 1) return "刚刚";
+      if (ageMinutes < 60) return `${ageMinutes} 分钟前`;
+      const ageHours = Math.floor(ageMinutes / 60);
+      if (ageHours < 24) return `${ageHours} 小时前`;
+      return `${Math.floor(ageHours / 24)} 天前`;
+    }
+
+    function buildTrend(projects, prefixes) {
+      const dates = Array.from({ length: TREND_DAYS }, (_, index) => {
+        const date = new Date(Date.now() - (TREND_DAYS - 1 - index) * 24 * 60 * 60 * 1000);
+        return date.toISOString().slice(0, 10);
+      });
+      const counts = Object.fromEntries(dates.map(date => [date, 0]));
+      for (const project of projects) {
+        for (const entry of project.changelog || []) {
+          if (!(entry.date in counts)) continue;
+          for (const text of entry.items) {
+            if (prefixes.some(prefix => text.toLowerCase().startsWith(prefix))) counts[entry.date]++;
+          }
+        }
+      }
+      return dates.map(date => ({ date, count: counts[date] }));
+    }
+
+    function getFilteredProjects(projects) {
+      const scoped = selectedProject ? projects.filter(project => project.name === selectedProject) : projects;
+      const query = filters.query.trim().toLowerCase();
+      return scoped.filter(project => {
+        const updatedAt = Date.parse(project.meta.updated || "");
+        if (filters.updatedWithin !== "all" && (!Number.isFinite(updatedAt) || Date.now() - updatedAt > Number(filters.updatedWithin) * 24 * 60 * 60 * 1000)) return false;
+        const tasks = { todo: [], "in-progress": [], done: [] };
+        let hasMatchingTasks = false;
+        for (const status of Object.keys(tasks)) {
+          if (!filters.statuses.has(status)) continue;
+          tasks[status] = project.tasks[status].filter(text => !query || text.toLowerCase().includes(query));
+          hasMatchingTasks = hasMatchingTasks || tasks[status].length > 0;
+        }
+        const searchTargets = [project.name, project.meta.description || "", project.meta.summary || "", project.goals.map(goal => goal.text).join("\n"), (project.changelog || []).flatMap(entry => entry.items).join("\n")];
+        const matchesMetadata = !query || searchTargets.some(target => target.toLowerCase().includes(query));
+        return hasMatchingTasks || matchesMetadata;
+      }).map(project => {
+        const query = filters.query.trim().toLowerCase();
+        return {
+          ...project,
+          tasks: Object.fromEntries(Object.keys(project.tasks).map(status => [
+            status,
+            filters.statuses.has(status) ? project.tasks[status].filter(text => !query || text.toLowerCase().includes(query)) : []
+          ]))
+        };
+      });
+    }
+
+    function refreshFilteredViews() {
+      renderKpis(cachedData.projects);
+      renderNotifications(cachedData.projects);
+      renderHealthCards(cachedData.projects);
+      renderTrends(cachedData.projects);
+      renderGoalOverview(cachedData.projects);
+      renderActivityFeed(cachedData.projects);
+      renderBoard(cachedData.projects);
+    }
+
+    function renderTrends(projects) {
+      const scopedProjects = getFilteredProjects(projects);
+      const trendDefinitions = [
+        { label: "完成任务", prefixes: ["complete task"] },
+        { label: "新增任务", prefixes: ["add task"] },
+        { label: "In Progress", prefixes: ["start task"] },
+        { label: "Agent 活跃", prefixes: ["start task", "complete task", "add task"] }
+      ];
+      document.getElementById("trend-grid").innerHTML = trendDefinitions.map(definition => {
+        const trend = buildTrend(scopedProjects, definition.prefixes);
+        const maxCount = Math.max(1, ...trend.map(item => item.count));
+        const total = trend.reduce((sum, item) => sum + item.count, 0);
+        return `
+          <article class="trend-card">
+            <div class="trend-top"><h3>${definition.label}</h3><span class="trend-total">${total}</span></div>
+            <div class="trend-window">最近 ${TREND_DAYS} 天</div>
+            <div class="trend-bars">
+              ${trend.map(item => `<div class="trend-bar${item.count ? "" : " empty"}" style="height:${Math.max(6, item.count / maxCount * 100)}%" title="${item.date}: ${item.count}"></div>`).join("")}
+            </div>
+          </article>
+        `;
+      }).join("");
+    }
+
+    function renderHealthCards(projects) {
+      const healthGrid = document.getElementById("health-grid");
+      healthGrid.style.display = selectedProject ? "none" : "grid";
+      healthGrid.innerHTML = getFilteredProjects(projects).map(project => {
+        const completed = project.tasks.done.length;
+        const taskTotal = completed + project.tasks.todo.length + project.tasks["in-progress"].length;
+        const progress = taskTotal ? Math.round(completed / taskTotal * 100) : 0;
+        const state = isProjectStale(project) ? "停滞" : "正常";
+        return `
+          <article class="health-card${isProjectStale(project) ? " stale" : ""}" data-name="${escAttr(project.name)}">
+            <div class="health-top">
+              <h3>${esc(project.name)}</h3>
+              <span class="health-state ${isProjectStale(project) ? "stale" : "ok"}">${state}</span>
+            </div>
+            <div class="health-meta">更新：${formatUpdatedAt(project)} · Agent：${esc(project.meta.agent || project.meta.owner || "未记录")} · 心跳：${formatHeartbeat(project)}</div>
+            <div class="health-progress">
+              <div class="progress-track"><div class="progress-fill" style="width:${progress}%"></div></div>
+              <span class="progress-value">${progress}%</span>
+            </div>
+            <div class="health-stats">
+              <div class="health-stat"><b>${project.tasks.todo.length}</b><span>Todo</span></div>
+              <div class="health-stat"><b>${project.tasks["in-progress"].length}</b><span>In Progress</span></div>
+              <div class="health-stat"><b>${completed}</b><span>Done</span></div>
+            </div>
+          </article>
+        `;
+      }).join("");
+    }
+
+    function renderGoalOverview(projects) {
+      const scopedProjects = getFilteredProjects(projects);
+      document.getElementById("goal-overview-grid").innerHTML = scopedProjects.map(project => {
+        const doneGoals = project.goals.filter(goal => goal.done).length;
+        const totalGoals = project.goals.length;
+        const percentage = totalGoals ? Math.round(doneGoals / totalGoals * 100) : 0;
+        return `
+          <article class="goal-overview-card">
+            <div class="goal-overview-top"><h3>${esc(project.name)}</h3><span class="goal-overview-value">${percentage}%</span></div>
+            <div class="goal-overview-meta">${doneGoals} / ${totalGoals} 个目标已完成</div>
+            <div class="health-progress">
+              <div class="progress-track"><div class="progress-fill" style="width:${percentage}%"></div></div>
+              <span class="progress-value">${doneGoals}/${totalGoals}</span>
+            </div>
+          </article>
+        `;
+      }).join("");
+    }
+
     function renderProjects(projects) {
       const list = document.getElementById("proj-list");
+      const overview = document.getElementById("overview-item");
+      overview.classList.toggle("selected", selectedProject === null);
       list.innerHTML = projects.map(p => {
         if (!projectColors[p.name]) projectColors[p.name] = colorClasses[colorIdx++ % colorClasses.length];
         const sel = selectedProject === p.name ? " selected" : "";
@@ -292,16 +719,83 @@
       }).join("");
       list.querySelectorAll(".proj-item").forEach(el => {
         el.addEventListener("click", () => {
-          selectedProject = selectedProject === el.dataset.name ? null : el.dataset.name;
-          renderProjects(cachedData.projects);
-          renderBoard(cachedData.projects);
+          selectProject(el.dataset.name || null);
         });
       });
+      overview.onclick = () => selectProject(null);
+    }
+
+    function renderActivityFeed(projects) {
+      const activities = getFilteredProjects(projects).flatMap(project => (project.changelog || []).flatMap(entry =>
+        entry.items.map(text => ({ project: project.name, date: entry.date, text }))
+      )).sort((a, b) => b.date.localeCompare(a.date)).filter(activity => !isTestActivity(activity.text)).slice(0, 20);
+      const filteredActivities = selectedProject ? activities.filter(activity => activity.project === selectedProject) : activities;
+      document.getElementById("activity-count").textContent = `${filteredActivities.length} 条最近变更`;
+      document.getElementById("activity-list").innerHTML = filteredActivities.map(activity => `
+        <div class="activity-item">
+          <span class="activity-date">${esc(activity.date)}</span>
+          <span class="proj-tag ${projectColors[activity.project] || "t4"}">${esc(activity.project)}</span>
+          <span class="activity-text">${esc(activity.text)}</span>
+        </div>
+      `).join("") || `<div class="empty">No recent activity</div>`;
+    }
+
+    function isTestActivity(text) {
+      return text.includes("__") || text.includes("stale_task_test");
+    }
+
+    function selectProject(project) {
+      selectedProject = project;
+      const params = new URLSearchParams(window.location.search);
+      if (project) params.set("project", project); else params.delete("project");
+      const query = params.toString();
+      window.history.replaceState(null, "", `${window.location.pathname}${query ? "?" + query : ""}${window.location.hash}`);
+      renderProjects(cachedData.projects);
+      renderHealthCards(cachedData.projects);
+      renderTrends(cachedData.projects);
+      renderGoalOverview(cachedData.projects);
+      renderActivityFeed(cachedData.projects);
+      renderBoard(cachedData.projects);
+    }
+
+    function openProjectDrawer(projectName) {
+      const drawerProject = cachedData.projects.find(project => project.name === projectName);
+      if (!drawerProject) return;
+      drawerProjectName = projectName;
+      document.getElementById("project-drawer-title").textContent = drawerProject.name;
+      const statusLabels = { todo: "Todo", "in-progress": "In Progress", done: "Done" };
+      const drawerTaskBoard = `
+        <div class="drawer-columns">
+          ${Object.entries(drawerProject.tasks).map(([status, items]) => `
+            <div class="drawer-column">
+              <h4>${statusLabels[status] || status} · ${items.length}</h4>
+              ${items.map(text => `<div class="drawer-task">${esc(text)}</div>`).join("") || `<div class="empty">Empty</div>`}
+            </div>
+          `).join("")}
+        </div>
+      `;
+      const drawerTimeline = `
+        <div class="drawer-timeline">
+          ${(drawerProject.changelog || []).flatMap(entry => entry.items.filter(text => !isTestActivity(text)).map(text => ({ date: entry.date, text }))).slice(0, 30).map(item => `
+            <div class="drawer-timeline-item"><span class="drawer-timeline-date">${esc(item.date)}</span><span>${esc(item.text)}</span></div>
+          `).join("") || `<div class="empty">No timeline entries</div>`}
+        </div>
+      `;
+      document.getElementById("project-drawer-body").innerHTML = `
+        <section class="drawer-section"><h3>Description</h3><div>${esc(drawerProject.meta.description || drawerProject.meta.summary || "暂无描述")}</div></section>
+        <section class="drawer-section"><h3>Board</h3>${drawerTaskBoard}</section>
+        <section class="drawer-section"><h3>Timeline</h3>${drawerTimeline}</section>
+      `;
+      document.getElementById("project-drawer-overlay").hidden = false;
+    }
+
+    function closeProjectDrawer() {
+      document.getElementById("project-drawer-overlay").hidden = true;
     }
 
     function renderBoard(projects) {
-      const filtered = selectedProject ? projects.filter(p => p.name === selectedProject) : projects;
-      document.getElementById("main-title").textContent = selectedProject || "All Projects";
+      const filtered = getFilteredProjects(projects);
+      document.getElementById("main-title").textContent = selectedProject || "监控看板";
 
       // description + goals
       const infoSection = document.getElementById("info-section");
@@ -339,7 +833,7 @@
         const pageItems = items.slice(start, start + PAGE_SIZE);
         document.getElementById("count-" + status).textContent = items.length;
           col.innerHTML = pageItems.length
-          ? pageItems.map(t => `<div class="task" draggable="true" data-text="${escAttr(t.text)}" data-project="${escAttr(t.project)}" data-status="${status}"><span class="proj-tag ${projectColors[t.project]||'t4'}">${esc(t.project)}</span><br><span class="task-text">${esc(t.text)}</span><button class="move-btn" title="Move to next">→</button><button class="del-btn" title="Delete">×</button></div>`).join("")
+          ? pageItems.map(t => `<div class="task" draggable="true" data-text="${escAttr(t.text)}" data-project="${escAttr(t.project)}" data-status="${status}">${status === "in-progress" ? `<span class="running-dot"></span>` : ""}<span class="proj-tag ${projectColors[t.project]||'t4'}">${esc(t.project)}</span><br><span class="task-text">${esc(t.text)}</span><button class="move-btn" title="Move to next">→</button><button class="del-btn" title="Delete">×</button></div>`).join("")
           : "";
           col.insertAdjacentHTML("afterbegin", `<button class="add-btn" data-col="${status}">+ Add Task</button>`);
           const footer = document.getElementById("footer-" + status);
@@ -357,7 +851,7 @@
       for (const p of filtered) {
         for (const entry of (p.changelog || [])) {
           if (!tlMap[entry.date]) tlMap[entry.date] = [];
-          for (const item of entry.items) {
+          for (const item of entry.items.filter(item => !isTestActivity(item))) {
             tlMap[entry.date].push({ text: item, project: p.name });
           }
         }
@@ -377,6 +871,47 @@
 
     function esc(s) { const d = document.createElement("div"); d.textContent = s; return d.innerHTML; }
     function escAttr(s) { return s.replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+    const healthGrid = document.getElementById("health-grid");
+    healthGrid.addEventListener("click", event => {
+      const card = event.target.closest(".health-card");
+      if (card) openProjectDrawer(card.dataset.name);
+    });
+
+    const projectDrawerOverlay = document.getElementById("project-drawer-overlay");
+    projectDrawerOverlay.addEventListener("click", event => {
+      if (event.target === projectDrawerOverlay || event.target.closest("#project-drawer-close")) closeProjectDrawer();
+    });
+    document.getElementById("project-drawer-open").addEventListener("click", () => {
+      selectProject(drawerProjectName);
+      closeProjectDrawer();
+    });
+
+    document.getElementById("filter-input").addEventListener("input", event => {
+      filters.query = event.target.value;
+      refreshFilteredViews();
+    });
+    document.querySelectorAll("[data-filter-status]").forEach(checkbox => {
+      checkbox.addEventListener("change", () => {
+        if (checkbox.checked) filters.statuses.add(checkbox.dataset.filterStatus); else filters.statuses.delete(checkbox.dataset.filterStatus);
+        refreshFilteredViews();
+      });
+    });
+    document.getElementById("updated-filter").addEventListener("change", event => {
+      filters.updatedWithin = event.target.value;
+      refreshFilteredViews();
+    });
+    document.getElementById("filter-reset").addEventListener("click", () => {
+      filters.query = "";
+      filters.statuses = new Set(["todo", "in-progress", "done"]);
+      filters.updatedWithin = "all";
+      document.getElementById("filter-input").value = "";
+      document.getElementById("updated-filter").value = "all";
+      document.querySelectorAll("[data-filter-status]").forEach(checkbox => { checkbox.checked = true; });
+      refreshFilteredViews();
+    });
+    document.getElementById("export-md").addEventListener("click", () => downloadReport("md"));
+    document.getElementById("export-html").addEventListener("click", () => downloadReport("html"));
 
     function setupEventDelegation() {
       for (const status of ["todo", "in-progress", "done"]) {
@@ -513,7 +1048,7 @@
     evtSource.onmessage = (e) => {
       try {
         const data = JSON.parse(e.data);
-        if (data.type === "agent-update") load();
+        if (data.type === "agent-update" || data.type === "agent-heartbeat") load();
       } catch (err) {}
     };
     document.getElementById("refresh-btn").addEventListener("click", () => load());

@@ -34,6 +34,19 @@ Content-Type: application/json
 
 **常用操作示例：**
 
+### 强制工作流
+
+1. 开始处理任何已存在的 Todo 前，**第一件事**是调用 `start_task`，把该任务移动到 `## In Progress`。
+2. 只有在调用 `start_task` 成功后，才开始修改项目文件。
+3. 完成处理后立即调用 `complete_task` 把任务移动到 `## Done`。
+4. 如果任务被拆分，先调用 `add_task` 建立新的 Todo，再按第 1 条流程处理。
+
+### 测试优先
+
+- 开发功能或修复 Bug 前，**必须先新增或修改对应测试用例**，并确认该测试在当前实现下失败。
+- 测试通过前不得把任务标记为 Done。
+- 每次实现或修复完成后必须运行 `node test.mjs`，并确保全量测试通过。
+
 开始处理任务（移到 In Progress）：
 ```json
 {"project": "项目名", "action": "start_task", "text": "任务描述"}
@@ -59,9 +72,20 @@ Content-Type: application/json
 {"project": "项目名", "action": "", "summary": "新摘要", "stage": "active"}
 ```
 
+上报 Agent 心跳：
+```json
+{"project": "项目名", "agent": "Agent 名称"}
+```
+
+```
+POST http://localhost:3456/api/agent-heartbeat
+Content-Type: application/json
+```
+
 **说明：**
 - `project` 必填，为项目名称（与 status.md 中的 project 字段一致）
-- 支持的 action：`add_task` / `complete_task` / `move_task` / `delete_task` / `edit_task` / `add_goal` / `complete_goal` / `delete_goal`
+- 支持的 action：`start_task` / `add_task` / `complete_task` / `move_task` / `delete_task` / `edit_task` / `add_goal` / `complete_goal` / `delete_goal`
 - `complete_task` 会自动把任务从 Todo/In Progress 移到 Done
 - 更新 `summary`/`stage` 时会自动更新 `updated` 时间戳
 - 添加/完成/删除操作会自动写入 changelog
+- 开始和结束任务时必须上报心跳，心跳会写入 `lastAgentHeartbeat` 并在监控页展示
