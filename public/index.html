@@ -73,6 +73,11 @@
     .edit-btn { border: 1px solid var(--border); background: var(--surface); color: var(--faint); font-size: 11px; padding: 2px 10px; border-radius: var(--radius-sm); cursor: pointer; transition: border-color .12s ease, color .12s ease; }
     .edit-btn:hover { border-color: var(--accent-border); color: var(--accent); }
     .desc-edit { width: 100%; min-height: 40px; padding: 6px 10px; border: 1px solid var(--accent-border); border-radius: var(--radius-sm); font-size: 13px; font-family: var(--font); color: var(--fg); background: var(--surface-muted); resize: vertical; outline: none; }
+    .edit-actions { display: flex; justify-content: flex-end; gap: 7px; margin-top: 8px; }
+    .edit-actions button { padding: 4px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); color: var(--muted); font-size: 12px; cursor: pointer; }
+    .edit-actions #desc-save-btn { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+    .edit-actions button:hover { border-color: var(--accent-border); color: var(--accent); }
+    .edit-actions #desc-save-btn:hover { color: #fff; filter: brightness(.96); }
     .goal-add-form { display: flex; gap: 6px; margin-top: 6px; }
     .goal-add-form input { flex: 1; padding: 4px 8px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 12px; font-family: var(--font); outline: none; }
     .goal-add-form input:focus { border-color: var(--accent-border); }
@@ -1163,9 +1168,10 @@
       const descEl = document.getElementById("proj-desc");
       if (descEl.querySelector("textarea")) return;
       const current = descEl.textContent;
-      descEl.innerHTML = `<textarea class="desc-edit">${esc(current)}</textarea>`;
+      descEl.innerHTML = `<textarea class="desc-edit">${esc(current)}</textarea><div class="edit-actions"><button type="button" id="desc-cancel-btn">取消</button><button type="button" id="desc-save-btn">OK</button></div>`;
       const ta = descEl.querySelector("textarea");
       ta.focus();
+      const cancel = () => { descEl.textContent = current; };
       const save = async () => {
         const val = ta.value.trim();
         if (val && val !== current && selectedProject) {
@@ -1177,6 +1183,9 @@
       };
       ta.addEventListener("blur", save);
       ta.addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); ta.blur(); } if (e.key === "Escape") { ta.value = current; ta.blur(); } });
+      document.getElementById("desc-save-btn").addEventListener("click", () => save());
+      document.getElementById("desc-cancel-btn").addEventListener("click", () => cancel());
+      descEl.querySelector(".edit-actions").addEventListener("mousedown", event => event.preventDefault());
     });
 
     // ── Goals add ──

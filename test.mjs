@@ -313,15 +313,16 @@ const serverSource = readFile(SERVER_FILE);
   check("Health cards are clickable and sync project selection", html.includes("healthGrid.addEventListener(\"click\", event =>"));
 
   // Test 37: API tracks started tasks and exposes stale-task detection
-  await post("/api/tasks", { project: PROJECT, action: "add", status: "todo", text: "__stale_task_test__" });
-  await post("/api/agent-update", { project: PROJECT, action: "start_task", text: "__stale_task_test__" });
+  const staleTaskText = `__stale_task_test_${Date.now()}__`;
+  await post("/api/tasks", { project: PROJECT, action: "add", status: "todo", text: staleTaskText });
+  await post("/api/agent-update", { project: PROJECT, action: "start_task", text: staleTaskText });
   const changelogBeforeStaleTest = readFile(path.join(PROJECT_DIR, ".dashboard", "changelog.md"));
   const staleApi = await get("/api/projects");
   const staleProject = staleApi.projects.find(project => project.name === PROJECT);
   check("API returns project health", !!staleProject?.health);
   check("API returns stale project flag", typeof staleProject?.health?.stale === "boolean");
   check("API returns stale task list", Array.isArray(staleProject?.health?.staleTasks));
-  const startedStaleTask = staleProject?.health?.staleTasks?.find(task => task.text === "__stale_task_test__");
+  const startedStaleTask = staleProject?.health?.staleTasks?.find(task => task.text === staleTaskText);
   check("start_task records a task start date", !!startedStaleTask?.startedAt);
   check("Newly started task is not stale", startedStaleTask?.stale === false);
 
@@ -331,15 +332,15 @@ const serverSource = readFile(SERVER_FILE);
   fs.writeFileSync(changelogPath, changelogBeforeStaleTest.replace(`## ${new Date().toISOString().slice(0, 10)}`, `## ${staleDate}`));
   const oldStaleApi = await get("/api/projects");
   const oldStaleProject = oldStaleApi.projects.find(project => project.name === PROJECT);
-  const oldStaleTask = oldStaleProject?.health?.staleTasks?.find(task => task.text === "__stale_task_test__");
+  const oldStaleTask = oldStaleProject?.health?.staleTasks?.find(task => task.text === staleTaskText);
   check("Old In Progress task is marked stale", oldStaleTask?.stale === true);
   check("Stale task makes project health stale", oldStaleProject?.health?.stale === true);
 
   // Test 39: Cleanup stale detection artifacts
-  await post("/api/agent-update", { project: PROJECT, action: "delete_task", status: "in-progress", text: "__stale_task_test__" });
+  await post("/api/agent-update", { project: PROJECT, action: "delete_task", status: "in-progress", text: staleTaskText });
   fs.writeFileSync(changelogPath, changelogBeforeStaleTest);
   const cleanStale = readFile(path.join(PROJECT_DIR, ".dashboard", "tasks.md"));
-  check("No stale test artifacts remain", !cleanStale.includes("__stale_task_test__"));
+  check("No stale test artifacts remain", !cleanStale.includes(staleTaskText));
   check("KPI uses API stale health", html.includes("scopedProjects.filter(project => isProjectStale(project))"));
   check("Health cards use API stale health", html.includes("isProjectStale(project) ? \"停滞\" : \"正常\""));
 
@@ -466,6 +467,13 @@ const serverSource = readFile(SERVER_FILE);
   check("Timeline list uses the filtered test-entry rule", html.includes('tlMap[date].map(t => `<div class="tl-item"><span class="proj-tag ${projectColors[t.project]'));
   check("Timeline day view uses the filtered test-entry rule", html.includes('tlMap[date].map(t => `<div class="tl-item"><span class="proj-tag ${projectColors[t.project]'));
   check("Project drawer timeline filters test entries", html.includes("entry.items.filter(text => !isTestActivity(text))"));
+
+  // Test 54: Description editing has explicit save and cancel controls
+  check("Description editor exposes an OK button", html.includes('id="desc-save-btn"'));
+  check("Description editor exposes a Cancel button", html.includes('id="desc-cancel-btn"'));
+  check("Description OK button invokes save", html.includes('desc-save-btn").addEventListener("click", () => save()'));
+  check("Description Cancel button invokes cancel", html.includes('desc-cancel-btn").addEventListener("click", () => cancel()'));
+  check("Description buttons prevent blur-triggered duplicate actions", html.includes('descEl.querySelector(".edit-actions").addEventListener("mousedown", event => event.preventDefault())'));
 
 } catch (e) {
   failed++;
