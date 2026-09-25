@@ -11,6 +11,7 @@ const TASKS_FILE = path.join(PROJECT_DIR, ".dashboard", "tasks.md");
 const GOALS_FILE = path.join(PROJECT_DIR, ".dashboard", "goals.md");
 const STATUS_FILE = path.join(PROJECT_DIR, ".dashboard", "status.md");
 const SERVER_FILE = path.join(PROJECT_DIR, "server.mjs");
+const FAVICON_FILE = path.join(PROJECT_DIR, "public", "favicon.svg");
 
 let passed = 0, failed = 0;
 const results = [];
@@ -474,6 +475,15 @@ const serverSource = readFile(SERVER_FILE);
   check("Description OK button invokes save", html.includes('desc-save-btn").addEventListener("click", () => save()'));
   check("Description Cancel button invokes cancel", html.includes('desc-cancel-btn").addEventListener("click", () => cancel()'));
   check("Description buttons prevent blur-triggered duplicate actions", html.includes('descEl.querySelector(".edit-actions").addEventListener("mousedown", event => event.preventDefault())'));
+
+  // Test 55: The dashboard uses a concise application icon
+  const favicon = fs.existsSync(FAVICON_FILE) ? readFile(FAVICON_FILE) : "";
+  check("Favicon file exists", fs.existsSync(FAVICON_FILE));
+  check("HTML links SVG favicon", html.includes('<link rel="icon" type="image/svg+xml" href="/favicon.svg">'));
+  check("Favicon uses a rounded gradient mark", favicon.includes('rx="15"') && favicon.includes("linearGradient"));
+  check("Favicon shows kanban columns", favicon.includes('M18 42V27') && favicon.includes('M28 42V20') && favicon.includes('M38 42V31'));
+  check("Favicon includes an agent node", favicon.includes('circle cx="45" cy="19" r="6"'));
+  check("Sidebar displays the application icon", html.includes('<img class="app-logo" src="/favicon.svg" alt="Agents Dashboard">'));
 
 } catch (e) {
   failed++;

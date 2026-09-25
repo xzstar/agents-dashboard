@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Agents Dashboard">
+  <defs>
+    <linearGradient id="iconGradient" x1="10" y1="6" x2="54" y2="58" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#6B74FA"/>
+      <stop offset="1" stop-color="#3539C9"/>
+    </linearGradient>
+  </defs>
+  <rect x="4" y="4" width="56" height="56" rx="15" fill="url(#iconGradient)"/>
+  <path d="M18 42V27" stroke="#fff" stroke-width="7" stroke-linecap="round"/>
+  <path d="M28 42V20" stroke="#fff" stroke-width="7" stroke-linecap="round"/>
+  <path d="M38 42V31" stroke="#fff" stroke-width="7" stroke-linecap="round"/>
+  <circle cx="45" cy="19" r="6" fill="#fff"/>
+</svg>
