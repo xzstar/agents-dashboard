@@ -7,7 +7,6 @@ A lightweight local web dashboard for tracking progress across project directori
 ```bash
 git clone https://github.com/xiezhe/agents-dashboard.git
 cd agents-dashboard
-cp -r template/.dashboard your-project/.dashboard
 node server.mjs ~/Projects
 ```
 
@@ -15,7 +14,7 @@ Open http://localhost:3456
 
 ## Setup for Your Project
 
-1. Copy `template/.dashboard/` to your project root
+1. Create a `.dashboard/` directory in your project root
 2. Edit `status.md` to set `project`, `description`, `summary`
 3. Add tasks to `tasks.md`, goals to `goals.md`
 4. Start the server with your projects root directory
